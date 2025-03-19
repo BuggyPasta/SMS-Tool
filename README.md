@@ -126,27 +126,15 @@ SMS-Tool/
 
 ## Deployment with Dockge
 
-1. Clone the repository:
-```bash
-git clone https://github.com/BuggyPasta/SMS-Tool.git
-cd SMS-Tool
-```
+1. Open Dockge in your browser, add the new stack using the contents of the docker-compose file. Adjust the volume paths to match your system.
 
-2. Create a `.env` file:
-```bash
-cp .env.example .env
-```
+2. Add the contents of the `.env` file
 
-3. Edit the `.env` file:
+3. Edit the contents of the `.env` file:
 - Set a secure `SECRET_KEY` (you can use an online secure key generator)
 - Adjust other settings as needed
 
-4. Deploy with Dockge:
-- Open Dockge in your browser
-- Click "Add New Stack"
-- Select the `docker-compose.yml` file from the SMS-Tool directory
-- Adjust the volume paths to match your system
-- Deploy the stack
+4. Deploy
 
 ## Configuration
 
@@ -179,6 +167,8 @@ devices:
 4. Monitor logs for suspicious activity
 5. Keep the system and Gammu updated
 
+The app is designed to be used in a LAN only and accessed via WireGuard or other VPN. 
+
 ## Troubleshooting
 
 ### Common Issues
@@ -204,11 +194,21 @@ devices:
 - Gammu logs: `/app/logs/gammu.log`
 - Docker logs: `docker logs sms-tool`
 
-## Support
-
 For issues and feature requests, please create an issue in the GitHub repository.
 
 ## License
 
-This project is licensed under the AGPL-3.0 License - see the LICENSE file for details. 
+AGPL-3.0 license
+
+## Authors
+BuggyPasta, with lots of help from A.I. because BuggyPasta is otherwise WORTHLESS in programming
+
+## Acknowledgments
+Vectors and icons by Mary Akveo in PD License via SVG Repo
+
+## Future development
+None planned, which is why you see in the docker compose above the 2 last lines instructing Watchtower to not bother checking for any updates. If you are not running Watchtower, feel free to remove them.
+
+## VERY IMPORTANT NOTE. NO, SERIOUSLY.
+This app is designed to work ONLY ON A LOCAL environment and is NOT secured in any way to work exposed to the Internet. As it will contain sensitive personal data, remember that you use it at your own risk. I STRONGLY recommend that you DO NOT EXPOSE it publically.
 

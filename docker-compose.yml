@@ -8,8 +8,8 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - /home/alex/docker_backup/sms-tool/database:/app/database
-      - /home/alex/docker_backup/sms-tool/logs:/app/logs
+      - /home/YOUR_USER_FOLDER/sms-tool/database:/app/database
+      - /home/YOUR_USER_FOLDER/sms-tool/logs:/app/logs
       - ./docker/gammu/gammurc:/root/.gammurc
     devices:
       - /dev/ttyUSB0
@@ -31,4 +31,6 @@ services:
     security_opt:
       - seccomp:unconfined
     privileged: true
-    user: root 
+    user: root
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
