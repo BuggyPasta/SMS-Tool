@@ -2,10 +2,11 @@
 Flask application initialization
 """
 
-from flask import Flask
+from flask import Flask, jsonify
 from .config import Config
 from .models import init_db
 from .services import GammuService
+import logging
 
 def create_app():
     """Create and configure the Flask application"""
@@ -23,6 +24,20 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)
+
+    # Register health check route
+    @app.route('/health')
+    def health_check():
+        try:
+            # Check database connection
+            from .models import User
+            User.get_all()
+            # Check Gammu connection
+            gammu_service.connect()
+            return jsonify({'status': 'healthy'}), 200
+        except Exception as e:
+            logging.error(f"Health check failed: {str(e)}")
+            return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
     # Register error handlers
     @app.errorhandler(404)

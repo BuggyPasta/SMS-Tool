@@ -112,8 +112,10 @@ class Message:
     def create(phone_number, content, sender_id):
         db = get_db()
         try:
-            cursor = db.execute('INSERT INTO messages (phone_number, content, sender_id) VALUES (?, ?, ?)',
-                      (phone_number, content, sender_id))
+            cursor = db.execute('''
+                INSERT INTO messages (phone_number, content, sender_id, status, queued_at) 
+                VALUES (?, ?, ?, 'queued', CURRENT_TIMESTAMP)
+            ''', (phone_number, content, sender_id))
             db.commit()
             return cursor.lastrowid
         except sqlite3.Error:
@@ -125,7 +127,15 @@ class Message:
     def get_all(limit=25, offset=0):
         db = get_db()
         messages = db.execute('''
-            SELECT m.*, u.username as sender_name 
+            SELECT m.*, u.username as sender_name,
+                   CASE 
+                       WHEN m.status = 'queued' THEN m.queued_at
+                       WHEN m.status = 'sending' THEN m.sending_at
+                       WHEN m.status = 'sent' THEN m.sent_at
+                       WHEN m.status = 'delivered' THEN m.delivered_at
+                       WHEN m.status = 'failed' THEN m.failed_at
+                       ELSE m.created_at
+                   END as status_time
             FROM messages m 
             JOIN users u ON m.sender_id = u.id 
             ORDER BY m.created_at DESC 
@@ -149,14 +159,31 @@ class Message:
         return messages
 
     @staticmethod
-    def update_status(message_id, status):
+    def update_status(message_id, status, error_message=None):
         db = get_db()
         try:
-            db.execute('''
-                UPDATE messages 
-                SET status = ?, sent_at = CASE WHEN ? = 'sent' THEN CURRENT_TIMESTAMP ELSE NULL END 
-                WHERE id = ?
-            ''', (status, status, message_id))
+            timestamp_field = {
+                'queued': 'queued_at',
+                'sending': 'sending_at',
+                'sent': 'sent_at',
+                'delivered': 'delivered_at',
+                'failed': 'failed_at'
+            }.get(status)
+            
+            if timestamp_field:
+                db.execute(f'''
+                    UPDATE messages 
+                    SET status = ?, {timestamp_field} = CURRENT_TIMESTAMP,
+                        error_message = ?
+                    WHERE id = ?
+                ''', (status, error_message, message_id))
+            else:
+                db.execute('''
+                    UPDATE messages 
+                    SET status = ?, error_message = ?
+                    WHERE id = ?
+                ''', (status, error_message, message_id))
+            
             db.commit()
             return True
         except sqlite3.Error:

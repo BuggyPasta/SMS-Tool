@@ -36,15 +36,16 @@
             </form>
         </div>
 
-        <div class="reports-table">
+        <div class="table-container">
             <table class="pure-table pure-table-bordered">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>User</th>
-                        <th>Template</th>
-                        <th>Status</th>
-                        <th>Message</th>
+                        <th style="width: 15%">Date</th>
+                        <th style="width: 15%">User</th>
+                        <th style="width: 15%">Template</th>
+                        <th style="width: 10%">Status</th>
+                        <th style="width: 35%">Message</th>
+                        <th style="width: 10%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -58,7 +59,12 @@
                                 {{ report.status }}
                             </span>
                         </td>
-                        <td>{{ report.message }}</td>
+                        <td class="message-cell">{{ report.message[:50] }}{% if report.message|length > 50 %}...{% endif %}</td>
+                        <td>
+                            <button class="pure-button button-small" onclick="showMessagePreview('{{ report.message|replace("'", "\\'") }}')">
+                                <img src="{{ url_for('static', filename='icons/view.svg') }}" alt="View" class="icon-small">
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -84,6 +90,15 @@
             </div>
         </div>
         {% endif %}
+    </div>
+</div>
+
+<!-- Message Preview Modal -->
+<div id="message-preview-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Message Preview</h3>
+        <div id="message-preview-content" class="message-preview"></div>
     </div>
 </div>
 {% endblock %} 

@@ -48,24 +48,27 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Template</th>
                         <th>Phone</th>
                         <th>Status</th>
+                        <th>Status Time</th>
                         <th>Message</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for message in recent_messages %}
                     <tr>
-                        <td>{{ message.date }}</td>
-                        <td>{{ message.template }}</td>
-                        <td>{{ message.phone }}</td>
+                        <td>{{ message.created_at }}</td>
+                        <td>{{ message.phone_number }}</td>
                         <td>
                             <span class="status-badge status-{{ message.status.lower() }}">
-                                {{ message.status }}
+                                {{ message.status|title }}
                             </span>
+                            {% if message.error_message %}
+                            <div class="error-message">{{ message.error_message }}</div>
+                            {% endif %}
                         </td>
-                        <td>{{ message.message }}</td>
+                        <td>{{ message.status_time }}</td>
+                        <td>{{ message.content }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -93,4 +96,44 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.status-queued {
+    background-color: #f0f0f0;
+    color: #666;
+}
+
+.status-sending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-sent {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.status-delivered {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-failed {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.error-message {
+    font-size: 0.8em;
+    color: #721c24;
+    margin-top: 4px;
+}
+</style>
 {% endblock %} 

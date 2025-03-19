@@ -24,9 +24,14 @@ CREATE TABLE IF NOT EXISTS messages (
     phone_number TEXT NOT NULL,
     content TEXT NOT NULL,
     sender_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
+    status TEXT NOT NULL DEFAULT 'queued',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    queued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sending_at TIMESTAMP,
     sent_at TIMESTAMP,
+    delivered_at TIMESTAMP,
+    failed_at TIMESTAMP,
+    error_message TEXT,
     FOREIGN KEY (sender_id) REFERENCES users(id)
 );
 

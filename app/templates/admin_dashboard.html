@@ -2,23 +2,219 @@
 
 {% block content %}
 <div class="admin-dashboard">
-    <div class="button-grid">
-        <a href="{{ url_for('admin.manage_users') }}" class="dashboard-button">
-            <img src="{{ url_for('static', filename='icons/user.svg') }}" alt="Manage Users">
-            <span>Manage Users</span>
-        </a>
-        <a href="{{ url_for('admin.manage_templates') }}" class="dashboard-button">
-            <img src="{{ url_for('static', filename='icons/sms_edit.svg') }}" alt="Manage SMS Templates">
-            <span>Manage SMS Templates</span>
-        </a>
-        <a href="{{ url_for('admin.sms_report') }}" class="dashboard-button">
-            <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Show SMS Report">
-            <span>Show SMS Report</span>
-        </a>
-        <a href="{{ url_for('auth.logout') }}" class="dashboard-button">
-            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Exit App">
-            <span>Exit App</span>
-        </a>
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <div class="header-actions">
+            <a href="{{ url_for('auth.logout') }}" class="pure-button">
+                <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+                <span>Log Out</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h2>System Health</h2>
+        <div class="health-grid">
+            <div class="health-card" id="database-health">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/database.svg') }}" alt="Database">
+                </div>
+                <div class="health-info">
+                    <h3>Database</h3>
+                    <p class="status-message">Checking...</p>
+                </div>
+            </div>
+
+            <div class="health-card" id="modem-health">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/modem.svg') }}" alt="Modem">
+                </div>
+                <div class="health-info">
+                    <h3>Modem</h3>
+                    <p class="status-message">Checking...</p>
+                    <div class="signal-strength"></div>
+                </div>
+            </div>
+
+            <div class="health-card" id="sim-health">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/sim.svg') }}" alt="SIM">
+                </div>
+                <div class="health-info">
+                    <h3>SIM Card</h3>
+                    <p class="status-message">Checking...</p>
+                    <p class="details"></p>
+                </div>
+            </div>
+
+            <div class="health-card" id="network-health">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/network.svg') }}" alt="Network">
+                </div>
+                <div class="health-info">
+                    <h3>Network</h3>
+                    <p class="status-message">Checking...</p>
+                    <p class="details"></p>
+                </div>
+            </div>
+
+            <div class="health-card" id="queue-health">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/queue.svg') }}" alt="Queue">
+                </div>
+                <div class="health-info">
+                    <h3>Message Queue</h3>
+                    <p class="status-message">Checking...</p>
+                    <p class="queue-size"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing dashboard content -->
+    <div class="dashboard-section">
+        <h2>Quick Actions</h2>
+        <div class="button-grid">
+            <a href="{{ url_for('admin.manage_users') }}" class="dashboard-button">
+                <img src="{{ url_for('static', filename='icons/user.svg') }}" alt="Users">
+                <span>Manage Users</span>
+            </a>
+            <a href="{{ url_for('admin.manage_templates') }}" class="dashboard-button">
+                <img src="{{ url_for('static', filename='icons/template.svg') }}" alt="Templates">
+                <span>Manage Templates</span>
+            </a>
+            <a href="{{ url_for('admin.sms_report') }}" class="dashboard-button">
+                <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Reports">
+                <span>SMS Reports</span>
+            </a>
+        </div>
     </div>
 </div>
+
+<style>
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.health-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.health-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f8f9fa;
+}
+
+.health-icon img {
+    width: 24px;
+    height: 24px;
+}
+
+.health-info {
+    flex: 1;
+}
+
+.health-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.status-message {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.health-card.healthy {
+    border-left: 4px solid #28a745;
+}
+
+.health-card.unhealthy {
+    border-left: 4px solid #dc3545;
+}
+
+.signal-strength {
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+}
+
+.signal-strength::before {
+    content: '';
+    display: block;
+    height: 100%;
+    background: #28a745;
+    border-radius: 2px;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.details, .queue-size {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0.25rem 0;
+}
+</style>
+
+<script>
+function updateHealthStatus() {
+    fetch('/admin/health')
+        .then(response => response.json())
+        .then(data => {
+            // Update database health
+            const dbCard = document.getElementById('database-health');
+            dbCard.className = `health-card ${data.database.status}`;
+            dbCard.querySelector('.status-message').textContent = data.database.message;
+
+            // Update modem health
+            const modemCard = document.getElementById('modem-health');
+            modemCard.className = `health-card ${data.modem.status}`;
+            modemCard.querySelector('.status-message').textContent = data.modem.message;
+            const signalBar = modemCard.querySelector('.signal-strength');
+            if (data.modem.signal && data.modem.signal.SignalPercent) {
+                signalBar.style.setProperty('--signal-strength', `${data.modem.signal.SignalPercent}%`);
+            }
+
+            // Update SIM health
+            const simCard = document.getElementById('sim-health');
+            simCard.className = `health-card ${data.sim.status}`;
+            simCard.querySelector('.status-message').textContent = data.sim.message;
+            simCard.querySelector('.details').textContent = JSON.stringify(data.sim.details);
+
+            // Update network health
+            const networkCard = document.getElementById('network-health');
+            networkCard.className = `health-card ${data.network.status}`;
+            networkCard.querySelector('.status-message').textContent = data.network.message;
+            networkCard.querySelector('.details').textContent = JSON.stringify(data.network.details);
+
+            // Update queue health
+            const queueCard = document.getElementById('queue-health');
+            queueCard.className = `health-card ${data.queue.status}`;
+            queueCard.querySelector('.status-message').textContent = data.queue.message;
+            queueCard.querySelector('.queue-size').textContent = `Queue size: ${data.queue.size}`;
+        })
+        .catch(error => {
+            console.error('Error fetching health status:', error);
+        });
+}
+
+// Update health status every 30 seconds
+updateHealthStatus();
+setInterval(updateHealthStatus, 30000);
+</script>
 {% endblock %} 
