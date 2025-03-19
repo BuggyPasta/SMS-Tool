@@ -1,0 +1,30 @@
+/* Main application styles */ 
+
+/* Error pages */
+.error-container {
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.error-container h1 {
+    color: var(--error-color);
+    margin-bottom: 1rem;
+}
+
+.error-container p {
+    margin-bottom: 2rem;
+    color: var(--text-color);
+}
+
+.error-container .pure-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.error-container .pure-button img {
+    width: 20px;
+    height: 20px;
+} 

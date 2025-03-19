@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="button-grid">
+        <a href="{{ url_for('admin.manage_users') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/user.svg') }}" alt="Manage Users">
+            <span>Manage Users</span>
+        </a>
+        <a href="{{ url_for('admin.manage_templates') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/sms_edit.svg') }}" alt="Manage SMS Templates">
+            <span>Manage SMS Templates</span>
+        </a>
+        <a href="{{ url_for('admin.sms_report') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Show SMS Report">
+            <span>Show SMS Report</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Exit App">
+            <span>Exit App</span>
+        </a>
+    </div>
+</div>
+{% endblock %} 

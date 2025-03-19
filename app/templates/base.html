@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS-Tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% if session.get('user_id') %}
+    <header class="header">
+        <img src="{{ url_for('static', filename='icons/app_logo.svg') }}" alt="SMS-Tool Logo" class="logo">
+        <h1 class="tagline">A simple SMS sending server</h1>
+    </header>
+    {% endif %}
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if session.get('user_id') %}
+    <footer class="footer">
+        <div class="theme-toggle">
+            <img src="{{ url_for('static', filename='icons/mode_dark.svg') }}" alt="Toggle theme" id="theme-toggle">
+        </div>
+        <div class="footer-line"></div>
+        <div class="footer-text">
+            Created by <a href="https://github.com/BuggyPasta" target="_blank">BuggyPasta</a> | 
+            <a href="https://github.com/BuggyPasta/SMS-Tool" target="_blank">GitHub</a>
+        </div>
+    </footer>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

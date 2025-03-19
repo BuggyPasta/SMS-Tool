@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="manage-templates">
+    <div class="button-grid">
+        <a href="{{ url_for('admin.dashboard') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Back to Home Page">
+            <span>Back to Home Page</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+            <span>Log Out</span>
+        </a>
+    </div>
+
+    <div class="template-forms">
+        <div class="form-section">
+            <h2>Add New Template</h2>
+            <form method="POST" class="pure-form pure-form-stacked">
+                <input type="hidden" name="action" value="add">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <label for="template-name">Template Name</label>
+                        <input type="text" id="template-name" name="name" required>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="template-content">Template Content</label>
+                        <textarea id="template-content" name="content" rows="4" required></textarea>
+                    </div>
+                    <div class="pure-controls">
+                        <button type="submit" class="pure-button pure-button-primary">
+                            <img src="{{ url_for('static', filename='icons/icon_ok.svg') }}" alt="Save">
+                            <span>Save Template</span>
+                        </button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="form-section">
+            <h2>Delete Template</h2>
+            <form method="POST" class="pure-form pure-form-stacked">
+                <input type="hidden" name="action" value="delete">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <label for="delete-template-name">Template Name</label>
+                        <input type="text" id="delete-template-name" name="name" required>
+                    </div>
+                    <div class="pure-controls">
+                        <button type="submit" class="pure-button button-error">
+                            <img src="{{ url_for('static', filename='icons/delete.svg') }}" alt="Delete">
+                            <span>Delete Template</span>
+                        </button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

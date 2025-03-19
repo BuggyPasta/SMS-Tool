@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <img src="{{ url_for('static', filename='icons/app_logo.svg') }}" alt="SMS-Tool Logo" class="login-logo">
+        <form method="POST" class="pure-form pure-form-stacked">
+            <fieldset>
+                <div class="pure-control-group">
+                    <label for="username">User Name</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="pure-control-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="pure-controls">
+                    <button type="submit" class="pure-button pure-button-primary">Login</button>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+{% endblock %} 

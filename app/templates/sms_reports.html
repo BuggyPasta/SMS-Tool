@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="sms-reports">
+    <div class="button-grid">
+        <a href="{{ url_for('admin.dashboard') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Back to Home Page">
+            <span>Back to Home Page</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="dashboard-button">
+            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+            <span>Log Out</span>
+        </a>
+    </div>
+
+    <div class="reports-section">
+        <h2>SMS Reports</h2>
+        <div class="reports-filters">
+            <form method="GET" class="pure-form pure-form-stacked">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="end-date">End Date</label>
+                        <input type="date" id="end-date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="pure-controls">
+                        <button type="submit" class="pure-button pure-button-primary">
+                            <img src="{{ url_for('static', filename='icons/search.svg') }}" alt="Filter">
+                            <span>Filter</span>
+                        </button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="reports-table">
+            <table class="pure-table pure-table-bordered">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Template</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.date }}</td>
+                        <td>{{ report.user }}</td>
+                        <td>{{ report.template }}</td>
+                        <td>
+                            <span class="status-badge status-{{ report.status.lower() }}">
+                                {{ report.status }}
+                            </span>
+                        </td>
+                        <td>{{ report.message }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if reports %}
+        <div class="reports-pagination">
+            <div class="pure-button-group" role="group">
+                {% if page > 1 %}
+                <a href="{{ url_for('admin.sms_reports', page=page-1, start_date=start_date, end_date=end_date) }}" class="pure-button">
+                    <img src="{{ url_for('static', filename='icons/arrow-left.svg') }}" alt="Previous">
+                    <span>Previous</span>
+                </a>
+                {% endif %}
+                <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                <a href="{{ url_for('admin.sms_reports', page=page+1, start_date=start_date, end_date=end_date) }}" class="pure-button">
+                    <img src="{{ url_for('static', filename='icons/arrow-right.svg') }}" alt="Next">
+                    <span>Next</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

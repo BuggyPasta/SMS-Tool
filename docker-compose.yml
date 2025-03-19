@@ -1,0 +1,23 @@
+# Docker Compose configuration 
+version: '3.8'
+
+services:
+  sms-tool:
+    build: .
+    container_name: sms-tool
+    ports:
+      - "4001:4001"
+    volumes:
+      - /home/alex/docker_backup/sms-tool/database:/app/database
+      - /home/alex/docker_backup/sms-tool/logs:/app/logs
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyUSB2:/dev/ttyUSB2
+    devices:
+      - /dev/ttyUSB0
+      - /dev/ttyUSB1
+      - /dev/ttyUSB2
+    environment:
+      - FLASK_APP=app
+      - FLASK_ENV=production
+    restart: unless-stopped 
