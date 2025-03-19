@@ -167,7 +167,7 @@ devices:
 4. Monitor logs for suspicious activity
 5. Keep the system and Gammu updated
 
-The app is designed to be used in a LAN only and accessed via WireGuard or other VPN. 
+The app is designed to be used in a LAN only and accessed via WireGuard or other VPN. The project has NOT been designed to be exposed on the Internet, so do so at your own risk. The idea is for this tool to be used in a trusted local environment where the admin knows all users in person and isn't afraid of malicious activity.
 
 ## Troubleshooting
 
@@ -207,7 +207,7 @@ BuggyPasta, with lots of help from A.I. because BuggyPasta is otherwise WORTHLES
 Vectors and icons by Mary Akveo in PD License via SVG Repo
 
 ## Future development
-None planned, which is why you see in the docker compose above the 2 last lines instructing Watchtower to not bother checking for any updates. If you are not running Watchtower, feel free to remove them.
+None planned, which is why you see in the docker compose the 2 last lines instructing Watchtower to not bother checking for any updates. If you are not running Watchtower, feel free to remove them.
 
 ## VERY IMPORTANT NOTE. NO, SERIOUSLY.
 This app is designed to work ONLY ON A LOCAL environment and is NOT secured in any way to work exposed to the Internet. As it will contain sensitive personal data, remember that you use it at your own risk. I STRONGLY recommend that you DO NOT EXPOSE it publically.
