@@ -26,10 +26,10 @@ class GammuService:
             gammu_config = {
                 'Device': '/dev/ttyUSB3',
                 'Connection': 'at',
-                'Synchronize': 1,
-                'Start': 1,
-                'Use_Locking': 1,
-                'Debug': 1
+                'Synchronize': 'yes',
+                'Start': 'yes',
+                'Use_Locking': 'yes',
+                'Debug': '1'
             }
             
             # Initialize state machine
