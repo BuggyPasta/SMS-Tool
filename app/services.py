@@ -14,6 +14,23 @@ from .models import Message
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Custom Exception Classes
+class GammuError(Exception):
+    """Base exception for Gammu-related errors"""
+    pass
+
+class ModemError(GammuError):
+    """Exception raised for modem-related errors"""
+    pass
+
+class SIMError(GammuError):
+    """Exception raised for SIM card-related errors"""
+    pass
+
+class NetworkError(GammuError):
+    """Exception raised for network-related errors"""
+    pass
+
 class GammuService:
     def __init__(self):
         self.state_machine = None
@@ -39,7 +56,7 @@ class GammuService:
             logger.info("Successfully connected to modem")
         except Exception as e:
             logger.error(f"Failed to connect to modem: {str(e)}")
-            raise
+            raise ModemError(f"Failed to connect to modem: {str(e)}")
 
     def send_sms(self, phone_number, message, message_id):
         """Send SMS message"""
