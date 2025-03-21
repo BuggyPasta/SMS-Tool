@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     tzdata \
     curl \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Set timezone to London
@@ -35,9 +36,8 @@ RUN mkdir -p /app/database /app/logs /app/templates && \
     touch /app/logs/gammu.log && \
     chmod 666 /app/logs/gammu.log
 
-# Ensure dialout group exists and set permissions
-RUN addgroup --system dialout && \
-    adduser --system --no-create-home --ingroup dialout gammuuser && \
+# Create system user and add to dialout group
+RUN adduser --system --no-create-home gammuuser && \
     usermod -a -G dialout gammuuser
 
 # Copy application code
@@ -56,9 +56,12 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo '    chmod 660 /dev/ttyUSB3' >> /entrypoint.sh && \
     echo '    chown root:dialout /dev/ttyUSB3' >> /entrypoint.sh && \
     echo '    ls -l /dev/ttyUSB3' >> /entrypoint.sh && \
+    echo '    id gammuuser' >> /entrypoint.sh && \
     echo '    groups gammuuser' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
-    echo 'exec "$@"' >> /entrypoint.sh && \
+    echo 'chown -R gammuuser:dialout /app/database /app/logs' >> /entrypoint.sh && \
+    echo 'chmod -R 775 /app/database /app/logs' >> /entrypoint.sh && \
+    echo 'exec gosu gammuuser "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
 # Create and activate virtual environment
@@ -74,9 +77,6 @@ RUN chown -R gammuuser:dialout /app && \
 
 # Expose port
 EXPOSE 4001
-
-# Switch to gammuuser
-USER gammuuser
 
 # Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
