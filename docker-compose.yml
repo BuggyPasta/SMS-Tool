@@ -3,7 +3,7 @@ version: '3.8'
 services:
   sms-tool:
     build:
-      context: .
+      context: https://github.com/BuggyPasta/SMS-Tool.git#main
       dockerfile: Dockerfile
     container_name: sms-tool
     ports:
