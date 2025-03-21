@@ -15,9 +15,6 @@ class Config:
     # Database configuration
     DATABASE = '/app/database/sms.db'
     
-    # Gammu configuration
-    GAMMU_CONFIG = '/root/gammurc'
-    
     # Application settings
     MAX_SMS_LENGTH = 160
     DEFAULT_TEMPLATE = 'Default'

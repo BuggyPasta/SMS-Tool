@@ -6,8 +6,8 @@ RUN apk add --no-cache \
     python3 \
     py3-pip \
     python3-dev \
-    gammu \
-    gammu-dev \
+    gammu=1.42.0-r2 \
+    gammu-dev=1.42.0-r2 \
     gcc \
     musl-dev \
     linux-headers \

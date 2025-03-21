@@ -22,16 +22,14 @@ class GammuService:
     def connect(self):
         """Connect to the modem"""
         try:
-            # Create Gammu configuration
+            # Create Gammu configuration for version 1.42.0
             gammu_config = {
                 'Device': '/dev/ttyUSB3',
                 'Connection': 'at',
-                'StartInfo': 'yes',
-                'SynchronizeTime': 'yes',
-                'Model': '',
-                'UseGlobalDebug': 'yes',
-                'DebugFile': '/app/logs/gammu.log',
-                'DebugLevel': 'textall'
+                'Synchronize': 1,
+                'Start': 1,
+                'Use_Locking': 1,
+                'Debug': 1
             }
             
             # Initialize state machine
