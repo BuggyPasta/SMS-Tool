@@ -8,13 +8,9 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - /home/YOUR_USER_FOLDER/sms-tool/database:/app/database
-      - /home/YOUR_USER_FOLDER/sms-tool/logs:/app/logs
-      - ./docker/gammu/gammurc:/root/gammurc
-      - type: bind
-        source: ./database/schema.sql
-        target: /app/database/schema.sql
-        read_only: true
+      - ${PWD}/database:/app/database
+      - ${PWD}/logs:/app/logs
+      - ${PWD}/docker/gammu/gammurc:/root/gammurc
     devices:
       - /dev/ttyUSB3
     environment:

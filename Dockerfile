@@ -20,30 +20,16 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Create app directory and necessary subdirectories
 WORKDIR /app
-RUN mkdir -p /app/database /app/logs
-
-# Debug: Show current directory contents before copy
-RUN echo "=== Before COPY ===" && \
-    pwd && \
-    ls -la
 
 # Copy entire application code first
 COPY . .
 
-# Debug: Show what was copied
-RUN echo "=== After COPY ===" && \
-    pwd && \
-    ls -la && \
-    echo "=== Database Directory ===" && \
-    ls -la /app/database/ || true && \
-    echo "=== Root Directory ===" && \
-    ls -la / && \
-    echo "=== App Directory ===" && \
-    ls -la /app
-
-# Verify schema.sql exists and is readable
-RUN ls -la /app/database/schema.sql && \
-    cat /app/database/schema.sql > /dev/null
+# Create necessary directories and ensure schema.sql is in place
+RUN mkdir -p /app/database /app/logs && \
+    if [ ! -f /app/database/schema.sql ]; then \
+      cp /app/database/schema.sql /app/database/schema.sql; \
+    fi && \
+    chmod 644 /app/database/schema.sql
 
 # Create and activate virtual environment
 RUN python3 -m venv /app/venv
