@@ -14,20 +14,30 @@ cleanup() {
 # Set up signal traps
 trap cleanup SIGTERM SIGINT
 
+# Set Python path
+export PYTHONPATH=/app:${PYTHONPATH:-}
+
 # Run preflight checks
 echo "Running preflight checks..."
-python3 /app/preflight.py
+python3 -c "from app.preflight import main; main()"
+if [ $? -ne 0 ]; then
+    echo "Preflight checks failed"
+    exit 1
+fi
+
+# Create necessary directories
+mkdir -p /app/instance
+mkdir -p /app/logs
 
 # Initialize database if needed
-if [ ! -f "/app/database/database.db" ]; then
+if [ ! -f "/app/instance/database.db" ]; then
     echo "Initializing database with schema from /app/database/schema.sql"
-    sqlite3 /app/database/database.db < /app/database/schema.sql
+    sqlite3 /app/instance/database.db < /app/database/schema.sql
     echo "Database initialized successfully"
 fi
 
-# Create log directory with proper permissions
-mkdir -p /app/logs
-chown -R gammuuser:dialout /app/logs
+# Set proper permissions
+chown -R gammuuser:dialout /app/logs /app/instance
 
 # Start Flask application
 echo "Starting Flask application..."

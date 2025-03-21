@@ -13,7 +13,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
     
     # Database configuration
-    DATABASE = '/app/database/sms.db'
+    DATABASE = '/app/instance/database.db'
     
     # Application settings
     MAX_SMS_LENGTH = 160

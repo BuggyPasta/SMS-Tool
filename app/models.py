@@ -7,6 +7,9 @@ import os
 from datetime import datetime
 import pytz
 from .config import Config
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_db():
     """Get database connection"""
@@ -21,17 +24,11 @@ def init_db():
         # Ensure database directory exists
         os.makedirs(os.path.dirname(Config.DATABASE), exist_ok=True)
         
+        # Get schema path
         schema_path = os.path.join('/app', 'database', 'schema.sql')
         if not os.path.exists(schema_path):
-            print(f"Schema file not found at {schema_path}, checking template...")
-            template_path = '/app/templates/schema.sql.template'
-            if os.path.exists(template_path):
-                print(f"Found template at {template_path}, copying to {schema_path}")
-                with open(template_path, 'r') as src, open(schema_path, 'w') as dst:
-                    dst.write(src.read())
-                os.chmod(schema_path, 0o644)
-            else:
-                raise FileNotFoundError(f"Neither schema file nor template found")
+            logger.error(f"Schema file not found at {schema_path}")
+            raise FileNotFoundError(f"Schema file not found at {schema_path}")
         
         print(f"Initializing database with schema from {schema_path}")
         with open(schema_path, 'r') as f:

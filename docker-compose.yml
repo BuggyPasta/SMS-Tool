@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   sms-tool:
-    build:
-      context: https://github.com/BuggyPasta/SMS-Tool.git#main
-      dockerfile: Dockerfile
+    build: .
     container_name: sms-tool
+    restart: unless-stopped
+    privileged: true
     ports:
       - "4001:4001"
     volumes:
-      - /home/ovenking/docker_backup/sms-tool/database:/app/database
-      - /home/ovenking/docker_backup/sms-tool/logs:/app/logs
-    devices:
+      - ./database:/app/database
+      - ./instance:/app/instance
+      - ./logs:/app/logs
       - /dev/ttyUSB3:/dev/ttyUSB3
     group_add:
       - dialout
@@ -21,7 +21,6 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - TZ=Europe/London
       - PYTHONUNBUFFERED=1
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "which curl || (apt-get update && apt-get install -y curl)", "&&", "curl", "-f", "http://localhost:4001/health"]
       interval: 30s
@@ -32,6 +31,5 @@ services:
       - SYS_ADMIN
     security_opt:
       - seccomp:unconfined
-    privileged: true
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
