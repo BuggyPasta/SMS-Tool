@@ -1,22 +1,16 @@
 # Gammu configuration file 
 [gammu]
-device = /dev/ttyUSB2
-connection = at
-model = 
-synchronizetime = yes
-logfile = /app/logs/gammu.log
-logformat = nothing
-use_locking = yes
-gammuloc = /usr/share/gammu
-startinfo = yes
+Device = /dev/ttyUSB3
+Connection = at
+Synchronize = yes
+Start = yes
+Use_Locking = yes
+Debug = 1
 
 [gammu1]
-device = /dev/ttyUSB1
-connection = at
-model = 
-synchronizetime = yes
-logfile = /app/logs/gammu.log
-logformat = nothing
-use_locking = yes
-gammuloc = /usr/share/gammu
-startinfo = yes 
+Device = /dev/ttyUSB3
+Connection = at
+Synchronize = yes
+Start = yes
+Use_Locking = yes
+Debug = 1 
