@@ -3,6 +3,7 @@ Database models
 """
 
 import sqlite3
+import os
 from datetime import datetime
 import pytz
 from .config import Config
@@ -16,7 +17,8 @@ def get_db():
 def init_db():
     """Initialize database with schema"""
     db = get_db()
-    with open('database/schema.sql', 'r') as f:
+    schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
+    with open(schema_path, 'r') as f:
         db.executescript(f.read())
     db.commit()
     db.close()

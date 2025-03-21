@@ -31,11 +31,14 @@ COPY requirements.txt .
 # Install Python dependencies in virtual environment
 RUN . /app/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
-
 # Create necessary directories
 RUN mkdir -p /app/database /app/logs
+
+# Copy database schema first
+COPY database/schema.sql /app/database/
+
+# Copy application code
+COPY . .
 
 # Set permissions
 RUN chmod -R 755 /app
