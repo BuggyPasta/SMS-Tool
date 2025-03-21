@@ -9,9 +9,9 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - ./database:/app/database
-      - ./instance:/app/instance
-      - ./logs:/app/logs
+      - /home/ovenking/docker_backup/sms_tool/database:/app/database:ro
+      - /home/ovenking/docker_backup/sms_tool/instance:/app/instance
+      - /home/ovenking/docker_backup/sms_tool/logs:/app/logs
       - /dev/ttyUSB3:/dev/ttyUSB3
     group_add:
       - dialout
@@ -21,8 +21,9 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - TZ=Europe/London
       - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
     healthcheck:
-      test: ["CMD", "which curl || (apt-get update && apt-get install -y curl)", "&&", "curl", "-f", "http://localhost:4001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
       interval: 30s
       timeout: 10s
       retries: 3

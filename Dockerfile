@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     sqlite3 \
     gosu \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create gammu user and add to dialout group
@@ -16,6 +17,12 @@ RUN useradd -m -u 101 -G dialout gammuuser
 
 # Set up working directory
 WORKDIR /app
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/instance /app/logs /app/database && \
+    chown -R gammuuser:dialout /app/instance /app/logs && \
+    chmod 775 /app/instance /app/logs && \
+    chmod 755 /app/database
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -26,11 +33,7 @@ COPY . .
 
 # Set up permissions
 RUN chown -R gammuuser:dialout /app && \
-    chmod +x entrypoint.sh && \
-    mkdir -p /app/logs && \
-    chown -R gammuuser:dialout /app/logs && \
-    mkdir -p /app/database && \
-    chown -R gammuuser:dialout /app/database
+    chmod +x entrypoint.sh
 
 # Create Gammu config
 RUN echo "[gammu]\ndevice = /dev/ttyUSB3\nconnection = at\nmodel = auto" > /etc/gammurc && \

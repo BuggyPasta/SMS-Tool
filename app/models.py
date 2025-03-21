@@ -22,7 +22,8 @@ def init_db():
     db = get_db()
     try:
         # Ensure database directory exists
-        os.makedirs(os.path.dirname(Config.DATABASE), exist_ok=True)
+        db_dir = os.path.dirname(Config.DATABASE)
+        os.makedirs(db_dir, exist_ok=True)
         
         # Get schema path
         schema_path = os.path.join('/app', 'database', 'schema.sql')
@@ -30,13 +31,28 @@ def init_db():
             logger.error(f"Schema file not found at {schema_path}")
             raise FileNotFoundError(f"Schema file not found at {schema_path}")
         
-        print(f"Initializing database with schema from {schema_path}")
+        logger.info(f"Initializing database at {Config.DATABASE} with schema from {schema_path}")
+        
+        # Initialize database
         with open(schema_path, 'r') as f:
             db.executescript(f.read())
         db.commit()
-        print("Database initialized successfully")
+        
+        # Ensure proper permissions
+        try:
+            import pwd
+            import grp
+            gammu_uid = pwd.getpwnam('gammuuser').pw_uid
+            dialout_gid = grp.getgrnam('dialout').gr_gid
+            os.chown(Config.DATABASE, gammu_uid, dialout_gid)
+            os.chmod(Config.DATABASE, 0o660)  # rw-rw----
+            logger.info("Database permissions set successfully")
+        except Exception as e:
+            logger.warning(f"Could not set database permissions: {e}")
+        
+        logger.info("Database initialized successfully")
     except Exception as e:
-        print(f"Error initializing database: {str(e)}")
+        logger.error(f"Error initializing database: {e}")
         raise
     finally:
         db.close()
