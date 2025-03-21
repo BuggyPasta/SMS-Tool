@@ -66,17 +66,12 @@ class GammuService:
                 # Try to open device directly first
                 try:
                     import fcntl
-                    import termios
                     fd = os.open('/dev/ttyUSB3', os.O_RDWR | os.O_NOCTTY)
                     logger.info("Successfully opened device directly")
                     
                     # Try to get exclusive lock
                     fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     logger.info("Successfully obtained device lock")
-                    
-                    # Try basic serial port configuration
-                    attrs = termios.tcgetattr(fd)
-                    logger.info("Successfully got terminal attributes")
                     os.close(fd)
                 except Exception as e:
                     logger.error(f"Error in direct device access: {e}")
@@ -89,21 +84,48 @@ class GammuService:
             else:
                 logger.info("Device /dev/ttyUSB3 does not exist")
 
-            # Initialize state machine
+            # Initialize state machine with debug logging
             self.state_machine = gammu.StateMachine()
             logger.info("State machine created")
             
             # Read configuration from gammurc
             logger.info("Reading config from /etc/gammurc")
             with open('/etc/gammurc', 'r') as f:
-                logger.info(f"gammurc contents:\n{f.read()}")
-            self.state_machine.ReadConfig(Filename='/etc/gammurc')
-            logger.info("Config read successfully")
+                config_contents = f.read()
+                logger.info(f"gammurc contents:\n{config_contents}")
+            
+            # Add debug level to config
+            debug_config = {
+                'Device': '/dev/ttyUSB3',
+                'Connection': 'at',
+                'LogFormat': 'textall',
+                'LogFile': '/app/logs/gammu.log',
+                'DebugLevel': '255'
+            }
+            
+            # Try setting config directly instead of reading from file
+            logger.info("Setting Gammu configuration programmatically")
+            self.state_machine.SetConfig(0, debug_config)
+            logger.info("Config set successfully")
             
             # Initialize the connection
             logger.info("Attempting to initialize connection...")
             self.state_machine.Init()
             logger.info("Successfully connected to modem")
+            
+            # Try getting basic modem info
+            try:
+                manufacturer = self.state_machine.GetManufacturer()
+                logger.info(f"Modem manufacturer: {manufacturer}")
+            except Exception as e:
+                logger.error(f"Could not get manufacturer: {e}")
+                
+            try:
+                model = self.state_machine.GetModel()
+                logger.info(f"Modem model: {model}")
+            except Exception as e:
+                logger.error(f"Could not get model: {e}")
+                
         except Exception as e:
             logger.error(f"Failed to connect to modem: {str(e)}")
             logger.error(f"Error type: {type(e)}")

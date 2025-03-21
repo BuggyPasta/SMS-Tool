@@ -84,25 +84,25 @@ def check_device_busy():
         import termios
         # Open device in blocking mode (like Gammu will)
         fd = os.open('/dev/ttyUSB3', os.O_RDWR | os.O_NOCTTY)
+        logger.info("Successfully opened device")
         
         # Try to get exclusive lock
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        logger.info("Successfully obtained device lock")
         
-        # Try to configure the serial port (like Gammu will)
-        attrs = termios.tcgetattr(fd)
-        # Set raw mode
-        attrs[0] = attrs[1] = 0  # Turn off all input/output flags
-        attrs[2] = termios.CS8 | termios.CREAD | termios.CLOCAL  # 8N1, enable receiver
-        attrs[3] = 0  # Turn off all local flags
-        attrs[4] = attrs[5] = termios.B115200  # Set baud rate
-        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+        # Just try to get current settings without modifying them
+        try:
+            attrs = termios.tcgetattr(fd)
+            logger.info("Successfully read terminal attributes")
+        except IOError as e:
+            if e.errno == 25:  # Inappropriate ioctl for device
+                logger.info("Device doesn't support terminal attributes (expected for some USB modems)")
+            else:
+                raise
         
-        # Try to send a break signal (like Gammu will)
-        termios.tcsendbreak(fd, 0)
-        
-        # If we got here, device is accessible
+        # If we got here, device is at least openable and lockable
         os.close(fd)
-        logger.info("✓ Device is accessible and configurable")
+        logger.info("✓ Device is accessible")
         return True
     except IOError as e:
         logger.error(f"❌ Device is busy or inaccessible: {e}")
