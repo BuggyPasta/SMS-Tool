@@ -1,18 +1,19 @@
-# Use Debian slim as base image
-FROM debian:bullseye-slim
+# Use Debian Bookworm as base image
+FROM debian:bookworm-slim
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Enable all repositories and install system dependencies
-RUN echo "deb http://deb.debian.org/debian bullseye main contrib non-free" > /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bullseye-backports main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bullseye-updates main contrib non-free" >> /etc/apt/sources.list && \
-    apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
+    python3-dev \
+    gammu \
+    gammu-smsd \
+    libgammu8 \
+    libgammu-i18n \
     python3-gammu \
     gcc \
     pkg-config \
