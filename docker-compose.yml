@@ -1,24 +1,25 @@
-# Docker Compose configuration 
 version: '3.8'
 
 services:
   sms-tool:
-    build: .
+    build:
+      context: https://github.com/BuggyPasta/SMS-Tool.git#main
     container_name: sms-tool
     ports:
       - "4001:4001"
     volumes:
       - /home/YOUR_USER_FOLDER/sms-tool/database:/app/database
       - /home/YOUR_USER_FOLDER/sms-tool/logs:/app/logs
-      - ./docker/gammu/gammurc:/root/.gammurc
+      - ./docker/gammu/gammurc:/root/gammurc
     devices:
-      - /dev/ttyUSB0
+      - /dev/ttyUSB3
     environment:
       - FLASK_APP=app
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY}
       - TZ=Europe/London
       - PYTHONUNBUFFERED=1
+      - GAMMU_CONFIG=/root/gammurc
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
