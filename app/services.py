@@ -26,10 +26,12 @@ class GammuService:
             gammu_config = {
                 'Device': '/dev/ttyUSB3',
                 'Connection': 'at',
-                'LogFile': '/app/logs/gammu.log',
-                'LogFormat': 'textall',
+                'StartInfo': 'yes',
                 'SynchronizeTime': 'yes',
-                'UseGlobalDebugFile': '1'
+                'Model': '',
+                'UseGlobalDebug': 'yes',
+                'DebugFile': '/app/logs/gammu.log',
+                'DebugLevel': 'textall'
             }
             
             # Initialize state machine

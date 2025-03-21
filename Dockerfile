@@ -21,8 +21,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Create app directory and necessary subdirectories
 WORKDIR /app
 
-# Create directories
-RUN mkdir -p /app/database /app/logs /app/templates
+# Create directories and set permissions
+RUN mkdir -p /app/database /app/logs /app/templates && \
+    chmod 755 /app/database /app/logs /app/templates && \
+    touch /app/logs/gammu.log && \
+    chmod 666 /app/logs/gammu.log
 
 # Copy application code
 COPY . .
