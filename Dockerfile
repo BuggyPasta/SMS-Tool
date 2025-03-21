@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     gammu \
     gammu-smsd \
     libgammu8 \
+    libgammu-dev \
     libgammu-i18n \
     python3-gammu \
     gcc \

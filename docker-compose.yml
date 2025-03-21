@@ -9,8 +9,8 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - /home/ovenking/docker_backup/sms_tool/database:/app/database
-      - /home/ovenking/docker_backup/sms_tool/logs:/app/logs
+      - /home/ovenking/docker_backup/sms-tool/database:/app/database
+      - /home/ovenking/docker_backup/sms-tool/logs:/app/logs
     devices:
       - /dev/ttyUSB3:/dev/ttyUSB3
     group_add:
