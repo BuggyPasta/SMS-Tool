@@ -8,9 +8,9 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - ${PWD}/database:/app/database
-      - ${PWD}/logs:/app/logs
-      - ${PWD}/docker/gammu/gammurc:/root/gammurc
+      - /home/ovenking/docker_backup/sms-tool/database:/app/database
+      - /home/ovenking/docker_backup/sms-tool/logs:/app/logs
+      - /etc/gammurc:/root/gammurc
     devices:
       - /dev/ttyUSB3
     environment:
