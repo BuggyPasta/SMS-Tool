@@ -7,6 +7,11 @@ RUN apk add --no-cache \
     py3-pip \
     python3-dev \
     gammu \
+    gammu-dev \
+    gcc \
+    musl-dev \
+    linux-headers \
+    pkgconfig \
     tzdata
 
 # Set timezone to London
