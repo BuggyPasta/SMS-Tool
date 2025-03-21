@@ -4,6 +4,7 @@ services:
   sms-tool:
     build:
       context: https://github.com/BuggyPasta/SMS-Tool.git#main
+      dockerfile: Dockerfile
     container_name: sms-tool
     ports:
       - "4001:4001"
@@ -11,6 +12,7 @@ services:
       - /home/ovenking/docker_backup/sms-tool/database:/app/database
       - /home/ovenking/docker_backup/sms-tool/logs:/app/logs
       - /etc/gammurc:/root/gammurc
+      - /home/ovenking/docker_backup/dockge/stacks/sms-tool/database/schema.sql:/app/database/schema.sql:ro
     devices:
       - /dev/ttyUSB3
     environment:

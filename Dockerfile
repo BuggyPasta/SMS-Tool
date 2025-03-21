@@ -21,15 +21,16 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Create app directory and necessary subdirectories
 WORKDIR /app
 
-# Copy entire application code first
-COPY . .
+# Copy schema.sql first
+COPY database/schema.sql /app/database/schema.sql.template
 
-# Create necessary directories and ensure schema.sql is in place
+# Create necessary directories
 RUN mkdir -p /app/database /app/logs && \
-    if [ ! -f /app/database/schema.sql ]; then \
-      cp /app/database/schema.sql /app/database/schema.sql; \
-    fi && \
+    cp /app/database/schema.sql.template /app/database/schema.sql && \
     chmod 644 /app/database/schema.sql
+
+# Copy entire application code
+COPY . .
 
 # Create and activate virtual environment
 RUN python3 -m venv /app/venv
