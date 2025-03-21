@@ -13,10 +13,10 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
     
     # Database configuration
-    DATABASE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'sms.db')
+    DATABASE = '/app/database/sms.db'
     
     # Gammu configuration
-    GAMMU_CONFIG = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'docker', 'gammu', 'gammurc')
+    GAMMU_CONFIG = '/root/gammurc'
     
     # Application settings
     MAX_SMS_LENGTH = 160

@@ -22,21 +22,22 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /app
 
 # Create directories
-RUN mkdir -p /app/database /app/logs
+RUN mkdir -p /app/database /app/logs /app/templates
 
 # Copy application code
 COPY . .
 
+# Save schema.sql as template in a different location
+RUN cp /app/database/schema.sql /app/templates/schema.sql.template
+
 # Create entrypoint script
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
     echo 'if [ ! -f /app/database/schema.sql ]; then' >> /entrypoint.sh && \
-    echo '    cp /app/database/schema.sql.template /app/database/schema.sql' >> /entrypoint.sh && \
+    echo '    cp /app/templates/schema.sql.template /app/database/schema.sql' >> /entrypoint.sh && \
+    echo '    chmod 644 /app/database/schema.sql' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
     echo 'exec "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
-
-# Save schema.sql as template
-RUN mv /app/database/schema.sql /app/database/schema.sql.template
 
 # Create and activate virtual environment
 RUN python3 -m venv /app/venv

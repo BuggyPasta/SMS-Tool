@@ -29,176 +29,84 @@ A Flask-based web application for sending SMS messages using a GSM modem. This a
 
 ## Software Requirements
 
-- Debian 12 (or compatible Linux distribution)
 - Docker and Docker Compose
-- Dockge (for deployment)
-- Python 3.x
-- Gammu
+- Linux-based system (tested on Ubuntu/Debian)
+- USB port for GSM modem
+- Internet connection for initial setup
 
-## Installation on Debian 12
+## Deployment with Dockge
 
-1. Install system dependencies:
-```bash
-sudo apt update
-sudo apt install -y python3 python3-pip gammu
-```
+1. Clone this repository to your Dockge server
+2. Create the following directory structure for data persistence:
+   ```
+   /home/ovenking/docker_backup/sms_tool/
+   ├── database/
+   └── logs/
+   ```
+3. Ensure your GSM modem is connected and recognized (usually as /dev/ttyUSB3)
+4. Create a stack in Dockge using the provided docker-compose.yml
+5. Set the following environment variables in Dockge:
+   - SECRET_KEY: Your secure secret key
+6. Deploy the stack
 
-2. Install Gammu:
-```bash
-sudo apt install -y gammu
-```
-For detailed Gammu installation instructions, visit: https://linux-packages.com/debian-12-bookworm/package/gammu
+The application will:
+- Initialize the database automatically on first run
+- Create necessary log files
+- Set up the SMS queue system
+- Configure the Gammu service for your modem
 
-3. Configure Gammu:
-```bash
-sudo gammu-config
-```
-- Select your modem device (usually /dev/ttyUSB0)
-- Choose the appropriate connection type (usually AT)
-- Save the configuration
-
-4. Test Gammu:
-```bash
-sudo gammu identify
-```
-
-## Project Structure
+## Directory Structure
 
 ```
-SMS-Tool/
+.
 ├── app/
+│   ├── static/
+│   ├── templates/
+│   ├── services/
 │   ├── __init__.py
 │   ├── config.py
 │   ├── models.py
 │   ├── routes.py
-│   ├── services.py
-│   ├── static/
-│   │   ├── css/
-│   │   │   └── style.css
-│   │   ├── icons/
-│   │   │   ├── admin.svg
-│   │   │   ├── dashboard.svg
-│   │   │   ├── database.svg
-│   │   │   ├── delete.svg
-│   │   │   ├── edit.svg
-│   │   │   ├── exit.svg
-│   │   │   ├── modem.svg
-│   │   │   ├── network.svg
-│   │   │   ├── queue.svg
-│   │   │   ├── report.svg
-│   │   │   ├── sim.svg
-│   │   │   ├── sms_delete.svg
-│   │   │   ├── sms_edit.svg
-│   │   │   ├── sms_send.svg
-│   │   │   ├── template.svg
-│   │   │   └── user.svg
-│   │   └── js/
-│   │       └── main.js
-│   ├── templates/
-│   │   ├── 404.html
-│   │   ├── 500.html
-│   │   ├── admin_dashboard.html
-│   │   ├── base.html
-│   │   ├── login.html
-│   │   ├── manage_templates.html
-│   │   ├── manage_users.html
-│   │   ├── send_sms.html
-│   │   ├── sms_report.html
-│   │   └── user_dashboard.html
-│   └── services/
-│       └── gammu_service.py
+│   └── services.py
 ├── database/
 │   └── schema.sql
 ├── docker/
 │   └── gammu/
 │       └── gammurc
 ├── logs/
-├── .env
-├── .env.example
-├── .gitattributes
-├── .gitignore
-├── docker-compose.yml
 ├── Dockerfile
-├── LICENSE
-├── README.md
+├── docker-compose.yml
 └── requirements.txt
 ```
 
-## Deployment with Dockge
+## Backup and Restore
 
-1. Open Dockge in your browser, add the new stack using the contents of the docker-compose file. Adjust the volume paths to match your system.
+All persistent data is stored in `/home/ovenking/docker_backup/sms_tool/`:
+- `database/`: Contains the SQLite database and schema
+- `logs/`: Contains application logs
 
-2. Add the contents of the `.env` file
-
-3. Edit the contents of the `.env` file:
-- Set a secure `SECRET_KEY` (you can use an online secure key generator)
-- Adjust other settings as needed
-
-4. Deploy
-
-## Configuration
-
-### Volume Paths
-Update the volume paths in `docker-compose.yml` to match your system:
-```yaml
-volumes:
-  - /path/to/your/database:/app/database
-  - /path/to/your/logs:/app/logs
-  - ./docker/gammu/gammurc:/root/.gammurc
-```
-
-### Modem Device
-Ensure the modem device path in `docker-compose.yml` matches your system:
-```yaml
-devices:
-  - /dev/ttyUSB0
-```
-
-## Default Credentials
-
-- Admin username: `admin`
-- Admin password: `admin` (change this immediately after first login)
-
-## Security Considerations
-
-1. Change the default admin password immediately after deployment
-2. Use HTTPS in production
-3. Regularly update dependencies
-4. Monitor logs for suspicious activity
-5. Keep the system and Gammu updated
-
-The app is designed to be used in a LAN only and accessed via WireGuard or other VPN. The project has NOT been designed to be exposed on the Internet, so do so at your own risk. The idea is for this tool to be used in a trusted local environment where the admin knows all users in person and isn't afraid of malicious activity.
+To backup your data, simply archive the `/home/ovenking/docker_backup/sms_tool/` directory.
 
 ## Troubleshooting
 
-### Common Issues
+1. If the application fails to start:
+   - Check the logs at `/home/ovenking/docker_backup/sms_tool/logs/app.log`
+   - Verify the GSM modem is properly connected
+   - Ensure all required directories exist and have proper permissions
 
-1. Modem Not Detected
-   - Check USB connection
-   - Verify device permissions
-   - Check Gammu configuration
+2. If SMS sending fails:
+   - Check the modem status in the admin dashboard
+   - Verify the SIM card is properly inserted and activated
+   - Check the signal strength indicator
 
-2. SIM Card Issues
-   - Verify SIM card is properly inserted
-   - Check SIM card PIN status
-   - Verify network registration
-
-3. Permission Issues
-   - Ensure proper permissions on volume mounts
-   - Check Docker user permissions
-   - Verify Gammu configuration file permissions
-
-### Logs
-
-- Application logs: `/app/logs/app.log`
-- Gammu logs: `/app/logs/gammu.log`
-- Docker logs: `docker logs sms-tool`
-
-For issues and feature requests, please create an issue in the GitHub repository.
+3. For other issues:
+   - Review the application logs
+   - Check the container logs in Dockge
+   - Verify all environment variables are set correctly
 
 ## License
 
-AGPL-3.0 license
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Authors
 BuggyPasta, with lots of help from A.I. because BuggyPasta is otherwise WORTHLESS in programming
