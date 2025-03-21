@@ -33,6 +33,5 @@ services:
     security_opt:
       - seccomp:unconfined
     privileged: true
-    user: root
     labels:
       - "com.centurylinklabs.watchtower.enable=false"

@@ -36,7 +36,9 @@ RUN mkdir -p /app/database /app/logs /app/templates && \
     chmod 666 /app/logs/gammu.log
 
 # Ensure dialout group exists and set permissions
-RUN getent group dialout || groupadd -r dialout
+RUN addgroup --system dialout && \
+    adduser --system --no-create-home --ingroup dialout gammuuser && \
+    usermod -a -G dialout gammuuser
 
 # Copy application code
 COPY . .
@@ -53,6 +55,8 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo 'if [ -e /dev/ttyUSB3 ]; then' >> /entrypoint.sh && \
     echo '    chmod 660 /dev/ttyUSB3' >> /entrypoint.sh && \
     echo '    chown root:dialout /dev/ttyUSB3' >> /entrypoint.sh && \
+    echo '    ls -l /dev/ttyUSB3' >> /entrypoint.sh && \
+    echo '    groups gammuuser' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
     echo 'exec "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
@@ -64,11 +68,15 @@ ENV PATH="/app/venv/bin:$PATH"
 # Install Python dependencies in virtual environment
 RUN . /app/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 
-# Set permissions
-RUN chmod -R 755 /app
+# Set permissions for app directory
+RUN chown -R gammuuser:dialout /app && \
+    chmod -R 755 /app
 
 # Expose port
 EXPOSE 4001
+
+# Switch to gammuuser
+USER gammuuser
 
 # Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
