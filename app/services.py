@@ -62,6 +62,30 @@ class GammuService:
                 stat = os.stat('/dev/ttyUSB3')
                 logger.info(f"Device exists and has mode: {oct(stat.st_mode)}")
                 logger.info(f"Device owner: uid={stat.st_uid}, gid={stat.st_gid}")
+                
+                # Try to open device directly first
+                try:
+                    import fcntl
+                    import termios
+                    fd = os.open('/dev/ttyUSB3', os.O_RDWR | os.O_NOCTTY)
+                    logger.info("Successfully opened device directly")
+                    
+                    # Try to get exclusive lock
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    logger.info("Successfully obtained device lock")
+                    
+                    # Try basic serial port configuration
+                    attrs = termios.tcgetattr(fd)
+                    logger.info("Successfully got terminal attributes")
+                    os.close(fd)
+                except Exception as e:
+                    logger.error(f"Error in direct device access: {e}")
+                    if 'fd' in locals():
+                        try:
+                            os.close(fd)
+                        except:
+                            pass
+                    raise
             else:
                 logger.info("Device /dev/ttyUSB3 does not exist")
 

@@ -82,17 +82,40 @@ def check_device_busy():
     try:
         import fcntl
         import termios
-        fd = os.open('/dev/ttyUSB3', os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        # Open device in blocking mode (like Gammu will)
+        fd = os.open('/dev/ttyUSB3', os.O_RDWR | os.O_NOCTTY)
+        
+        # Try to get exclusive lock
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        
+        # Try to configure the serial port (like Gammu will)
+        attrs = termios.tcgetattr(fd)
+        # Set raw mode
+        attrs[0] = attrs[1] = 0  # Turn off all input/output flags
+        attrs[2] = termios.CS8 | termios.CREAD | termios.CLOCAL  # 8N1, enable receiver
+        attrs[3] = 0  # Turn off all local flags
+        attrs[4] = attrs[5] = termios.B115200  # Set baud rate
+        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+        
+        # Try to send a break signal (like Gammu will)
+        termios.tcsendbreak(fd, 0)
+        
+        # If we got here, device is accessible
         os.close(fd)
-        logger.info("✓ Device is not busy")
+        logger.info("✓ Device is accessible and configurable")
         return True
-    except IOError:
-        logger.error("❌ Device is busy or locked by another process")
+    except IOError as e:
+        logger.error(f"❌ Device is busy or inaccessible: {e}")
         return False
     except Exception as e:
-        logger.error(f"❌ Error checking device busy status: {e}")
+        logger.error(f"❌ Error checking device status: {e}")
         return False
+    finally:
+        try:
+            if 'fd' in locals():
+                os.close(fd)
+        except:
+            pass
 
 def main():
     """Run all preflight checks"""
