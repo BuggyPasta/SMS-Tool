@@ -5,9 +5,11 @@ Application routes
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from functools import wraps
 from .models import User, Template, Message
-from .services import GammuService, GammuError, ModemError, SIMError, NetworkError
+from .services.gammu_service import GammuService
+from .exceptions import GammuError, ModemError, SIMError, NetworkError, ErrorCode
 import re
 import logging
+import time
 from . import gammu_service
 
 # Initialize blueprints
@@ -15,7 +17,53 @@ auth_bp = Blueprint('auth', __name__)
 admin_bp = Blueprint('admin', __name__)
 user_bp = Blueprint('user', __name__)
 
-logger = logging.getLogger(__name__)
+# Get logger
+logger = logging.getLogger('routes')
+
+# Rate limiting configuration
+RATE_LIMIT_WINDOW = 60  # seconds
+RATE_LIMIT_MAX_REQUESTS = 30
+rate_limit_data = {
+    'requests': [],
+    'window_start': time.time()
+}
+
+def check_rate_limit():
+    """Check if request is within rate limits"""
+    current_time = time.time()
+    
+    # Clear old requests
+    rate_limit_data['requests'] = [
+        req_time for req_time in rate_limit_data['requests']
+        if current_time - req_time < RATE_LIMIT_WINDOW
+    ]
+    
+    # Check if window has expired
+    if current_time - rate_limit_data['window_start'] >= RATE_LIMIT_WINDOW:
+        rate_limit_data['window_start'] = current_time
+        rate_limit_data['requests'] = []
+    
+    # Check if limit exceeded
+    if len(rate_limit_data['requests']) >= RATE_LIMIT_MAX_REQUESTS:
+        return False
+    
+    # Add current request
+    rate_limit_data['requests'].append(current_time)
+    return True
+
+def standardize_health_response(status: str, components: dict = None, error: str = None) -> tuple:
+    """Create standardized health check response"""
+    response = {
+        'status': status,
+        'timestamp': time.time(),
+        'components': components or {}
+    }
+    
+    if error:
+        response['error'] = error
+    
+    status_code = 200 if status == 'healthy' else 500
+    return jsonify(response), status_code
 
 def login_required(f):
     @wraps(f)
@@ -140,30 +188,34 @@ def delete_all_messages():
         flash('Failed to delete messages', 'error')
     return redirect(url_for('admin.sms_report'))
 
-@admin_bp.route('/admin/health')
-@admin_required
+@admin_bp.route('/health')
 def health_check():
-    health_status = {
-        'status': 'healthy',
-        'components': {
-            'database': {'status': 'healthy'},
-            'modem': {
-                'status': 'healthy',
-                'details': {}
-            }
+    """Comprehensive health check endpoint"""
+    if not check_rate_limit():
+        return standardize_health_response(
+            'unhealthy',
+            error='Rate limit exceeded'
+        )
+
+    components = {
+        'database': {'status': 'healthy'},
+        'modem': {
+            'status': 'healthy',
+            'details': {}
         }
     }
+    overall_status = 'healthy'
 
     try:
         # Check database connection
         User.get_all()
     except Exception as e:
         logger.error(f"Database health check failed: {str(e)}")
-        health_status['components']['database'] = {
+        components['database'] = {
             'status': 'unhealthy',
             'error': str(e)
         }
-        health_status['status'] = 'unhealthy'
+        overall_status = 'unhealthy'
 
     try:
         # Check Gammu connection and status
@@ -171,23 +223,24 @@ def health_check():
             gammu_service.connect()
         
         # Get modem details
-        modem_details = {}
-        modem_details['network'] = gammu_service.check_modem_status()
-        modem_details['signal'] = gammu_service.get_signal_strength()
-        modem_details['battery'] = gammu_service.get_battery_status()
-        modem_details['sim'] = gammu_service.get_sim_status()
-        
-        health_status['components']['modem']['details'] = modem_details
+        components['modem']['details'] = {
+            'network': gammu_service.check_modem_status(),
+            'signal': gammu_service.get_signal_strength(),
+            'battery': gammu_service.get_battery_status(),
+            'sim': gammu_service.get_sim_status()
+        }
     except Exception as e:
         logger.error(f"Modem health check failed: {str(e)}")
-        health_status['components']['modem'] = {
+        components['modem'] = {
             'status': 'unhealthy',
             'error': str(e)
         }
-        health_status['status'] = 'unhealthy'
+        if isinstance(e, (ModemError, SIMError, NetworkError)):
+            components['modem']['error_code'] = e.error_code.name
+            components['modem']['error_number'] = e.error_code.value
+        overall_status = 'unhealthy'
 
-    status_code = 200 if health_status['status'] == 'healthy' else 500
-    return jsonify(health_status), status_code
+    return standardize_health_response(overall_status, components)
 
 # User routes
 @user_bp.route('/')

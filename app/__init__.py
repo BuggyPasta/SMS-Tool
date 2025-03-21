@@ -2,27 +2,33 @@
 Flask application initialization
 """
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, g
 from .config import Config
 from .models import init_db
-from .services import GammuService
-import logging
-import os
+from .services.gammu_service import GammuService
+from .logging_config import setup_logging
 import atexit
+import signal
+import sys
+import threading
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('/app/logs/app.log')
-    ]
-)
-logger = logging.getLogger(__name__)
+# Setup logging
+loggers = setup_logging()
+logger = loggers['app']
 
 # Global Gammu service instance
 gammu_service = None
+
+# Shutdown event for graceful termination
+shutdown_event = threading.Event()
+
+def signal_handler(signum, frame):
+    """Handle termination signals"""
+    signal_name = signal.Signals(signum).name
+    logger.info(f"Received signal {signal_name}")
+    shutdown_event.set()
+    cleanup_gammu()
+    sys.exit(0)
 
 def cleanup_gammu():
     """Cleanup function to properly close Gammu connection"""
@@ -39,8 +45,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Ensure log directory exists
-    os.makedirs('/app/logs', exist_ok=True)
+    # Register signal handlers
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     try:
         # Initialize database
@@ -56,7 +63,7 @@ def create_app():
         gammu_service = GammuService()
         logger.info("Gammu service initialized successfully")
         
-        # Register cleanup function
+        # Register cleanup functions
         atexit.register(cleanup_gammu)
     except Exception as e:
         logger.error(f"Failed to initialize Gammu service: {str(e)}")
@@ -68,27 +75,24 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)
 
-    # Register health check route
-    @app.route('/health')
-    def health_check():
-        try:
-            # Check database connection
-            from .models import User
-            User.get_all()
-            # Check Gammu connection
-            gammu_service.connect()
-            return jsonify({'status': 'healthy'}), 200
-        except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
-            return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+    @app.before_request
+    def before_request():
+        """Set up request context"""
+        g.shutdown_event = shutdown_event
 
-    # Register error handlers
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return render_template('404.html'), 404
+    @app.teardown_appcontext
+    def teardown_appcontext(exception=None):
+        """Clean up request context"""
+        if exception:
+            logger.error(f"Error during request: {str(exception)}")
 
-    @app.errorhandler(500)
-    def internal_error(error):
-        return render_template('500.html'), 500
+    @app.errorhandler(Exception)
+    def handle_error(error):
+        """Global error handler"""
+        logger.error(f"Unhandled error: {str(error)}", exc_info=True)
+        return jsonify({
+            'error': 'Internal Server Error',
+            'message': str(error)
+        }), 500
 
     return app 
