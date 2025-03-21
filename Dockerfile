@@ -21,13 +21,22 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Create app directory and necessary subdirectories
 WORKDIR /app
 
-# First, copy just the schema file and create directories
-COPY database/schema.sql /app/database/schema.sql
-RUN mkdir -p /app/logs && \
-    chmod 644 /app/database/schema.sql
+# Create directories
+RUN mkdir -p /app/database /app/logs
 
 # Copy application code
 COPY . .
+
+# Create entrypoint script
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'if [ ! -f /app/database/schema.sql ]; then' >> /entrypoint.sh && \
+    echo '    cp /app/database/schema.sql.template /app/database/schema.sql' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
+    echo 'exec "$@"' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+# Save schema.sql as template
+RUN mv /app/database/schema.sql /app/database/schema.sql.template
 
 # Create and activate virtual environment
 RUN python3 -m venv /app/venv
@@ -41,6 +50,9 @@ RUN chmod -R 755 /app
 
 # Expose port
 EXPOSE 4001
+
+# Set the entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Run the application using the virtual environment's Python
 CMD ["/app/venv/bin/python", "-m", "flask", "run", "--host=0.0.0.0", "--port=4001"] 
