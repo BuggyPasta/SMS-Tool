@@ -22,13 +22,10 @@ class GammuService:
     def connect(self):
         """Connect to the modem"""
         try:
-            # Create Gammu configuration
+            # Create Gammu configuration with minimal settings
             gammu_config = {
                 'Device': '/dev/ttyUSB3',
                 'Connection': 'at',
-                'LogFile': '/app/logs/gammu.log',
-                'LogFormat': 'textall',
-                'Start': 'yes',
                 'Debug': '1'
             }
             
