@@ -17,11 +17,19 @@ def get_db():
 def init_db():
     """Initialize database with schema"""
     db = get_db()
-    schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
-    with open(schema_path, 'r') as f:
-        db.executescript(f.read())
-    db.commit()
-    db.close()
+    try:
+        schema_path = os.path.join('/app', 'database', 'schema.sql')
+        if not os.path.exists(schema_path):
+            raise FileNotFoundError(f"Schema file not found at {schema_path}")
+        
+        with open(schema_path, 'r') as f:
+            db.executescript(f.read())
+        db.commit()
+    except Exception as e:
+        print(f"Error initializing database: {str(e)}")
+        raise
+    finally:
+        db.close()
 
 class User:
     @staticmethod

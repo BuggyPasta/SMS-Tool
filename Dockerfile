@@ -18,27 +18,23 @@ RUN apk add --no-cache \
 ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Create app directory
+# Create app directory and necessary subdirectories
 WORKDIR /app
+RUN mkdir -p /app/database /app/logs
+
+# Copy entire application code first
+COPY . .
+
+# Verify schema.sql exists and is readable
+RUN ls -la /app/database/schema.sql && \
+    cat /app/database/schema.sql > /dev/null
 
 # Create and activate virtual environment
 RUN python3 -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt .
-
 # Install Python dependencies in virtual environment
 RUN . /app/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
-
-# Create necessary directories
-RUN mkdir -p /app/database /app/logs
-
-# Copy database schema first
-COPY database/schema.sql /app/database/
-
-# Copy application code
-COPY . .
 
 # Set permissions
 RUN chmod -R 755 /app
