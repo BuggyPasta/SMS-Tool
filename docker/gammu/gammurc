@@ -1,7 +1,8 @@
 # Gammu configuration file 
 [gammu]
-Device = /dev/ttyUSB3
-Connection = at
+device = /dev/ttyUSB3
+name = Phone on USB serial port SimTech__Incorporated SimTech__Incorporated
+connection = at
 
 [gammu1]
 Device = /dev/ttyUSB3

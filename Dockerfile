@@ -27,6 +27,10 @@ RUN mkdir -p /app/database /app/logs /app/templates && \
     touch /app/logs/gammu.log && \
     chmod 666 /app/logs/gammu.log
 
+# Add dialout group and set permissions
+RUN addgroup -S dialout && \
+    chmod 660 /dev/ttyUSB* 2>/dev/null || true
+
 # Copy application code
 COPY . .
 
@@ -39,6 +43,7 @@ RUN echo '#!/bin/sh' > /entrypoint.sh && \
     echo '    cp /app/templates/schema.sql.template /app/database/schema.sql' >> /entrypoint.sh && \
     echo '    chmod 644 /app/database/schema.sql' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
+    echo 'chmod 660 /dev/ttyUSB* 2>/dev/null || true' >> /entrypoint.sh && \
     echo 'exec "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
