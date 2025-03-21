@@ -2,9 +2,7 @@
 [gammu]
 Device = /dev/ttyUSB3
 Connection = at
-Debug = 1
 
 [gammu1]
 Device = /dev/ttyUSB3
-Connection = at
-Debug = 1 
+Connection = at 
