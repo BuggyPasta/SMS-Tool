@@ -45,4 +45,4 @@ RUN echo "[gammu]\ndevice = /dev/ttyUSB3\nconnection = at\nmodel = auto" > /etc/
 USER gammuuser
 
 # Set entrypoint
-ENTRYPOINT ["./entrypoint.sh"] 
+ENTRYPOINT ["./entrypoint.sh"]
