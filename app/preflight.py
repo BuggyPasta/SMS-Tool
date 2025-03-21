@@ -9,9 +9,11 @@ import grp
 import pwd
 import gammu
 import logging
+from .logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Set up logging
+loggers = setup_logging()
+logger = loggers['app']
 
 def check_device_exists():
     """Check if the USB device exists"""
