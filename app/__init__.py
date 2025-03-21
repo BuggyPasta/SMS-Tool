@@ -8,6 +8,7 @@ from .models import init_db
 from .services import GammuService
 import logging
 import os
+import atexit
 
 # Configure logging
 logging.basicConfig(
@@ -19,6 +20,19 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Global Gammu service instance
+gammu_service = None
+
+def cleanup_gammu():
+    """Cleanup function to properly close Gammu connection"""
+    global gammu_service
+    if gammu_service:
+        try:
+            gammu_service.close()
+            logger.info("Gammu service cleaned up successfully")
+        except Exception as e:
+            logger.error(f"Error during Gammu cleanup: {e}")
 
 def create_app():
     """Create and configure the Flask application"""
@@ -38,8 +52,12 @@ def create_app():
 
     try:
         # Initialize Gammu service
+        global gammu_service
         gammu_service = GammuService()
         logger.info("Gammu service initialized successfully")
+        
+        # Register cleanup function
+        atexit.register(cleanup_gammu)
     except Exception as e:
         logger.error(f"Failed to initialize Gammu service: {str(e)}")
         raise

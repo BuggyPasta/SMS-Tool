@@ -62,6 +62,7 @@ RUN cp /app/database/schema.sql /app/templates/schema.sql.template
 
 # Create entrypoint script
 RUN echo '#!/bin/bash' > /entrypoint.sh && \
+    echo 'trap "kill -TERM \$child; exit" SIGTERM' >> /entrypoint.sh && \
     echo 'if [ ! -f /app/database/schema.sql ]; then' >> /entrypoint.sh && \
     echo '    cp /app/templates/schema.sql.template /app/database/schema.sql' >> /entrypoint.sh && \
     echo '    chmod 644 /app/database/schema.sql' >> /entrypoint.sh && \
@@ -82,7 +83,9 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo '    echo "Preflight checks failed. Please check the logs above."' >> /entrypoint.sh && \
     echo '    exit 1' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
-    echo 'exec gosu gammuuser "$@"' >> /entrypoint.sh && \
+    echo 'exec gosu gammuuser "$@" &' >> /entrypoint.sh && \
+    echo 'child=$!' >> /entrypoint.sh && \
+    echo 'wait "$child"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
 # Create and activate virtual environment

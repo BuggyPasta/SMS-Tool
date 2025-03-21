@@ -8,14 +8,12 @@ from .models import User, Template, Message
 from .services import GammuService, GammuError, ModemError, SIMError, NetworkError
 import re
 import logging
+from . import gammu_service
 
 # Initialize blueprints
 auth_bp = Blueprint('auth', __name__)
 admin_bp = Blueprint('admin', __name__)
 user_bp = Blueprint('user', __name__)
-
-# Initialize Gammu service
-gammu_service = GammuService()
 
 logger = logging.getLogger(__name__)
 
@@ -145,15 +143,51 @@ def delete_all_messages():
 @admin_bp.route('/admin/health')
 @admin_required
 def health_check():
+    health_status = {
+        'status': 'healthy',
+        'components': {
+            'database': {'status': 'healthy'},
+            'modem': {
+                'status': 'healthy',
+                'details': {}
+            }
+        }
+    }
+
     try:
         # Check database connection
         User.get_all()
-        # Check Gammu connection
-        gammu_service.connect()
-        return jsonify({'status': 'healthy'}), 200
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+        logger.error(f"Database health check failed: {str(e)}")
+        health_status['components']['database'] = {
+            'status': 'unhealthy',
+            'error': str(e)
+        }
+        health_status['status'] = 'unhealthy'
+
+    try:
+        # Check Gammu connection and status
+        if not gammu_service.is_connected():
+            gammu_service.connect()
+        
+        # Get modem details
+        modem_details = {}
+        modem_details['network'] = gammu_service.check_modem_status()
+        modem_details['signal'] = gammu_service.get_signal_strength()
+        modem_details['battery'] = gammu_service.get_battery_status()
+        modem_details['sim'] = gammu_service.get_sim_status()
+        
+        health_status['components']['modem']['details'] = modem_details
+    except Exception as e:
+        logger.error(f"Modem health check failed: {str(e)}")
+        health_status['components']['modem'] = {
+            'status': 'unhealthy',
+            'error': str(e)
+        }
+        health_status['status'] = 'unhealthy'
+
+    status_code = 200 if health_status['status'] == 'healthy' else 500
+    return jsonify(health_status), status_code
 
 # User routes
 @user_bp.route('/')
@@ -179,42 +213,51 @@ def send_sms():
             flash('Message contains too many repeated characters. Please correct and try again.', 'error')
             return render_template('send_sms.html')
         
+        message_id = None
         try:
             # Create message record
             message_id = Message.create(phone_number, message, session['user_id'])
-            if message_id:
-                # Send message
-                if gammu_service.send_sms(phone_number, message, message_id):
-                    Message.update_status(message_id, 'sent')
-                    flash('Message sent successfully', 'success')
-                else:
-                    Message.update_status(message_id, 'failed')
-                    flash('Failed to send message. Please try again.', 'error')
-            else:
+            if not message_id:
                 flash('Failed to save message. Please try again.', 'error')
+                return redirect(url_for('user.send_sms'))
+
+            # Send message
+            if gammu_service.send_sms(phone_number, message, message_id):
+                Message.update_status(message_id, 'sent')
+                flash('Message sent successfully', 'success')
+            else:
+                Message.update_status(message_id, 'failed')
+                flash('Failed to send message. Please try again.', 'error')
+
         except ModemError as e:
             logger.error(f"Modem error: {str(e)}")
-            Message.update_status(message_id, 'failed')
+            if message_id:
+                Message.update_status(message_id, 'failed', str(e))
             flash(f'Modem error: {str(e)}. Please check the modem connection.', 'error')
         except SIMError as e:
             logger.error(f"SIM error: {str(e)}")
-            Message.update_status(message_id, 'failed')
+            if message_id:
+                Message.update_status(message_id, 'failed', str(e))
             flash(f'SIM card error: {str(e)}. Please check the SIM card.', 'error')
         except NetworkError as e:
             logger.error(f"Network error: {str(e)}")
-            Message.update_status(message_id, 'failed')
+            if message_id:
+                Message.update_status(message_id, 'failed', str(e))
             flash(f'Network error: {str(e)}. Please check the network connection.', 'error')
         except ValueError as e:
             logger.error(f"Validation error: {str(e)}")
-            Message.update_status(message_id, 'failed')
+            if message_id:
+                Message.update_status(message_id, 'failed', str(e))
             flash(f'Message validation error: {str(e)}. Please correct and try again.', 'error')
         except GammuError as e:
             logger.error(f"Gammu error: {str(e)}")
-            Message.update_status(message_id, 'failed')
+            if message_id:
+                Message.update_status(message_id, 'failed', str(e))
             flash(f'System error: {str(e)}. Please try again later.', 'error')
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
-            Message.update_status(message_id, 'failed')
+            if message_id:
+                Message.update_status(message_id, 'failed', str(e))
             flash('An unexpected error occurred. Please try again later.', 'error')
         
         return redirect(url_for('user.send_sms'))
