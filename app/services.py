@@ -40,10 +40,28 @@ class GammuService:
         """Connect to the modem"""
         try:
             # Log current user and permissions
-            logger.info(f"Current user: {os.getuid()}")
-            logger.info(f"Current groups: {os.getgroups()}")
+            uid = os.getuid()
+            gid = os.getgid()
+            groups = os.getgroups()
+            logger.info(f"Current user ID: {uid}")
+            logger.info(f"Current group ID: {gid}")
+            logger.info(f"Supplementary groups: {groups}")
+            
+            try:
+                import grp
+                dialout_gid = grp.getgrnam('dialout').gr_gid
+                logger.info(f"Dialout group ID: {dialout_gid}")
+                if gid == dialout_gid:
+                    logger.info("Primary group is dialout")
+                if dialout_gid in groups:
+                    logger.info("User has dialout in supplementary groups")
+            except Exception as e:
+                logger.error(f"Error checking dialout group: {e}")
+
             if os.path.exists('/dev/ttyUSB3'):
-                logger.info(f"Device exists and has permissions: {oct(os.stat('/dev/ttyUSB3').st_mode)}")
+                stat = os.stat('/dev/ttyUSB3')
+                logger.info(f"Device exists and has mode: {oct(stat.st_mode)}")
+                logger.info(f"Device owner: uid={stat.st_uid}, gid={stat.st_gid}")
             else:
                 logger.info("Device /dev/ttyUSB3 does not exist")
 

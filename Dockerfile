@@ -50,6 +50,10 @@ COPY . .
 COPY docker/gammu/gammurc /etc/gammurc
 COPY docker/gammu/gammurc /home/gammuuser/.config/gammu/config
 
+# Set correct ownership and permissions for gammurc files
+RUN chown root:dialout /etc/gammurc && \
+    chmod 644 /etc/gammurc
+
 # Set environment variable for XDG config
 ENV XDG_CONFIG_HOME=/home/gammuuser/.config
 

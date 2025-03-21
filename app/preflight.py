@@ -38,13 +38,25 @@ def check_device_permissions():
 def check_user_groups():
     """Check if current user is in dialout group"""
     try:
+        # Get dialout group info
         dialout_gid = grp.getgrnam('dialout').gr_gid
-        user_groups = os.getgroups()
-        if dialout_gid not in user_groups:
-            logger.error("❌ Current user is not in dialout group")
-            return False
-        logger.info("✓ User is in dialout group")
-        return True
+        
+        # Check primary group
+        primary_gid = os.getgid()
+        if primary_gid == dialout_gid:
+            logger.info("✓ User's primary group is dialout")
+            return True
+            
+        # Check supplementary groups
+        groups = os.getgroups()
+        logger.info(f"User groups: primary={primary_gid}, supplementary={groups}")
+        
+        if dialout_gid in groups:
+            logger.info("✓ User has dialout as supplementary group")
+            return True
+            
+        logger.error(f"❌ Current user is not in dialout group (gid={dialout_gid})")
+        return False
     except Exception as e:
         logger.error(f"❌ Error checking user groups: {e}")
         return False
