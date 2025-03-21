@@ -96,21 +96,28 @@ class GammuService:
 
     def _get_cached_state(self, key: str, fetch_func, error_code: ErrorCode) -> Any:
         """Get state from cache or fetch and cache it"""
-        value = self._state.get(key)
-        if value is not None:
-            return value
-        
         try:
-            value = fetch_func()
-            self._state.update(**{key: value})
-            return value
+            value = self._state.get(key)
+            if value is not None:
+                return value
+                
+            with self._lock:
+                if not self._is_connected:
+                    raise ModemError("Modem is not connected", error_code)
+                    
+                try:
+                    value = fetch_func()
+                    self._state.update(**{key: value})
+                    return value
+                except gammu.GSMError as e:
+                    self._state.invalidate()
+                    raise ModemError(f"Failed to fetch {key}: {str(e)}", error_code) from e
+                    
         except Exception as e:
-            logger.error(f"Error fetching {key}: {e}")
-            raise GammuError(
-                f"Failed to get {key}",
-                error_code=error_code,
-                original_error=e
-            )
+            if not isinstance(e, ModemError):
+                self._state.invalidate()
+                raise ModemError(f"Unexpected error fetching {key}: {str(e)}", error_code) from e
+            raise
 
     def is_connected(self) -> bool:
         """Check if the service is connected to the modem"""

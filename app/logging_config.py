@@ -5,105 +5,125 @@ Centralized logging configuration for the SMS Tool application
 import logging
 import logging.handlers
 import os
+import sys
 from typing import Dict, Optional
 import uuid
 from flask import request, has_request_context
+from pathlib import Path
+from werkzeug.local import LocalProxy
+
+# Constants
+DEFAULT_LOG_LEVEL = logging.INFO
+DEFAULT_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(request_id)s - %(message)s'
+DEFAULT_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+LOG_DIR = Path('/app/logs')
+MAX_BYTES = 10 * 1024 * 1024  # 10MB
+BACKUP_COUNT = 5
 
 class RequestIdFilter(logging.Filter):
-    """Adds request ID to log records"""
+    """Add request_id to log records if available."""
     def filter(self, record):
-        if has_request_context():
-            record.request_id = getattr(request, 'id', 'no-request-id')
-        else:
-            record.request_id = 'no-request-id'
+        record.request_id = get_request_id() if has_request_context() else 'no_request'
         return True
+
+def get_request_id() -> str:
+    """Get current request ID or generate a new one."""
+    if not hasattr(request, 'id'):
+        setattr(request, 'id', str(uuid.uuid4()))
+    return getattr(request, 'id')
 
 def get_log_level() -> int:
     """Get log level from environment or default to INFO"""
-    level_name = os.environ.get('LOG_LEVEL', 'INFO').upper()
-    return getattr(logging.getLevelName(level_name), 'INFO')
+    level_name = os.getenv('LOG_LEVEL', 'INFO').upper()
+    try:
+        return logging._nameToLevel[level_name]
+    except KeyError:
+        return DEFAULT_LOG_LEVEL
 
-def create_rotating_handler(filename: str, max_bytes: int = 10485760, backup_count: int = 5) -> logging.Handler:
-    """Create a rotating file handler with the specified parameters"""
-    handler = logging.handlers.RotatingFileHandler(
-        filename=filename,
-        maxBytes=max_bytes,  # 10MB
-        backupCount=backup_count
-    )
-    return handler
+def ensure_log_directory() -> bool:
+    """Ensure log directory exists and is writable."""
+    try:
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        # Test write permissions
+        test_file = LOG_DIR / '.test_write'
+        test_file.touch()
+        test_file.unlink()
+        return True
+    except (OSError, PermissionError) as e:
+        print(f"Warning: Could not create/write to log directory: {e}", file=sys.stderr)
+        return False
 
-def remove_existing_handlers(logger: logging.Logger) -> None:
-    """Remove any existing handlers from a logger"""
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
+def create_formatter() -> logging.Formatter:
+    """Create log formatter with request ID."""
+    return logging.Formatter(DEFAULT_FORMAT, DEFAULT_DATE_FORMAT)
 
-def create_formatter(include_process: bool = False) -> logging.Formatter:
-    """Create a formatter with the specified format"""
-    format_parts = ['%(asctime)s - %(request_id)s - %(name)s - %(levelname)s']
-    if include_process:
-        format_parts.append('- PID:%(process)d')
-    format_parts.extend(['- %(message)s'])
-    
-    return logging.Formatter(' '.join(format_parts))
+def create_console_handler() -> logging.Handler:
+    """Create console handler with proper formatting."""
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(create_formatter())
+    return console_handler
 
-def setup_logger(name: str, log_file: Optional[str] = None, level: Optional[int] = None) -> logging.Logger:
-    """Setup a logger with the specified configuration"""
+def create_file_handler(filename: str) -> Optional[logging.Handler]:
+    """Create rotating file handler with error handling."""
+    if not ensure_log_directory():
+        return None
+        
+    try:
+        file_path = LOG_DIR / filename
+        handler = logging.handlers.RotatingFileHandler(
+            file_path,
+            maxBytes=MAX_BYTES,
+            backupCount=BACKUP_COUNT,
+            encoding='utf-8'
+        )
+        handler.setFormatter(create_formatter())
+        return handler
+    except (OSError, PermissionError) as e:
+        print(f"Warning: Could not create log file handler for {filename}: {e}", file=sys.stderr)
+        return None
+
+def setup_component_logger(name: str, level: Optional[int] = None) -> logging.Logger:
+    """Set up logger for a specific component with fallback handling."""
     logger = logging.getLogger(name)
-    remove_existing_handlers(logger)
-    
-    # Set level
     logger.setLevel(level or get_log_level())
+    
+    # Remove existing handlers
+    logger.handlers.clear()
+    
+    # Always add console handler
+    console_handler = create_console_handler()
+    logger.addHandler(console_handler)
+    
+    # Try to add file handler
+    file_handler = create_file_handler(f"{name}.log")
+    if file_handler:
+        logger.addHandler(file_handler)
     
     # Add request ID filter
     logger.addFilter(RequestIdFilter())
     
-    # Create console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(create_formatter())
-    logger.addHandler(console_handler)
-    
-    # Create file handler if log file specified
-    if log_file:
-        file_handler = create_rotating_handler(log_file)
-        file_handler.setFormatter(create_formatter(include_process=True))
-        logger.addHandler(file_handler)
-    
-    # Prevent propagation to root logger
-    logger.propagate = False
-    
     return logger
 
 def setup_logging() -> Dict[str, logging.Logger]:
-    """Configure logging for all application components"""
-    # Ensure log directory exists
-    os.makedirs('/app/logs', exist_ok=True)
-    
-    # Get base log level
-    base_level = get_log_level()
-    
-    # Configure root logger
-    root_logger = logging.getLogger()
-    remove_existing_handlers(root_logger)
-    root_logger.setLevel(base_level)
-    
-    # Setup component loggers
-    loggers = {
-        'app': setup_logger('app', '/app/logs/app.log', base_level),
-        'gammu': setup_logger('gammu', '/app/logs/gammu.log', base_level),
-        'models': setup_logger('models', '/app/logs/models.log', base_level),
-        'routes': setup_logger('routes', '/app/logs/routes.log', base_level)
-    }
-    
-    # Log startup information
-    for name, logger in loggers.items():
-        logger.info(f"Logger '{name}' initialized with level {logging.getLevelName(logger.level)}")
-    
-    return loggers
-
-def get_request_id() -> str:
-    """Generate or get request ID"""
-    if has_request_context():
-        if not hasattr(request, 'id'):
-            request.id = str(uuid.uuid4())
-        return request.id
-    return 'no-request-id' 
+    """Initialize all application loggers with error handling."""
+    try:
+        # Set up component loggers
+        loggers = {
+            'app': setup_component_logger('app'),
+            'gammu': setup_component_logger('gammu'),
+            'routes': setup_component_logger('routes'),
+            'models': setup_component_logger('models')
+        }
+        
+        # Set up root logger
+        root_logger = logging.getLogger()
+        root_logger.setLevel(get_log_level())
+        
+        return loggers
+    except Exception as e:
+        # Ensure we have at least console logging in case of setup failure
+        print(f"Critical: Failed to set up logging: {e}", file=sys.stderr)
+        fallback_logger = logging.getLogger()
+        fallback_logger.setLevel(DEFAULT_LOG_LEVEL)
+        fallback_logger.addHandler(create_console_handler())
+        return {'app': fallback_logger} 
