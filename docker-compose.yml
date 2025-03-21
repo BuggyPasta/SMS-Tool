@@ -12,7 +12,6 @@ services:
       - /home/ovenking/docker_backup/sms-tool/database:/app/database
       - /home/ovenking/docker_backup/sms-tool/logs:/app/logs
       - /etc/gammurc:/root/gammurc
-      - /home/ovenking/docker_backup/dockge/stacks/sms-tool/database/schema.sql:/app/database/schema.sql:ro
     devices:
       - /dev/ttyUSB3
     environment:
