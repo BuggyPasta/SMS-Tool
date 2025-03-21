@@ -84,34 +84,44 @@ class GammuService:
             else:
                 logger.info("Device /dev/ttyUSB3 does not exist")
 
-            # Initialize state machine with debug logging
+            # Initialize state machine
             self.state_machine = gammu.StateMachine()
             logger.info("State machine created")
             
-            # Read configuration from gammurc
-            logger.info("Reading config from /etc/gammurc")
-            with open('/etc/gammurc', 'r') as f:
-                config_contents = f.read()
-                logger.info(f"gammurc contents:\n{config_contents}")
-            
-            # Add debug level to config
+            # Use minimal configuration
             debug_config = {
                 'Device': '/dev/ttyUSB3',
                 'Connection': 'at',
-                'LogFormat': 'textall',
-                'LogFile': '/app/logs/gammu.log',
-                'DebugLevel': '255'
+                'Model': 'auto'
             }
             
-            # Try setting config directly instead of reading from file
+            # Try setting config directly
             logger.info("Setting Gammu configuration programmatically")
-            self.state_machine.SetConfig(0, debug_config)
-            logger.info("Config set successfully")
+            try:
+                self.state_machine.SetConfig(0, debug_config)
+                logger.info("Config set successfully")
+            except Exception as e:
+                logger.error(f"Failed to set config programmatically: {e}")
+                # Fall back to reading from file
+                logger.info("Falling back to reading config from /etc/gammurc")
+                self.state_machine.ReadConfig(Filename='/etc/gammurc')
+                logger.info("Config read successfully from file")
             
-            # Initialize the connection
-            logger.info("Attempting to initialize connection...")
-            self.state_machine.Init()
-            logger.info("Successfully connected to modem")
+            # Initialize the connection with retries
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    logger.info(f"Attempting to initialize connection (attempt {attempt + 1}/{max_retries})...")
+                    self.state_machine.Init()
+                    logger.info("Successfully connected to modem")
+                    break
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        logger.error(f"Connection attempt {attempt + 1} failed: {e}")
+                        import time
+                        time.sleep(2)  # Wait before retry
+                    else:
+                        raise
             
             # Try getting basic modem info
             try:
