@@ -43,7 +43,7 @@ class GammuService:
             self.state_machine = gammu.StateMachine()
             
             # Read configuration from gammurc
-            self.state_machine.ReadConfig()
+            self.state_machine.ReadConfig(Filename='/etc/gammurc')
             
             # Initialize the connection
             self.state_machine.Init()

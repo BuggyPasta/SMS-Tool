@@ -39,8 +39,19 @@ RUN mkdir -p /app/database /app/logs /app/templates && \
 # Create system user with dialout as primary group
 RUN adduser --system --no-create-home --ingroup dialout gammuuser
 
+# Set up Gammu configuration
+RUN mkdir -p /etc/gammu && \
+    mkdir -p /home/gammuuser/.config/gammu
+
 # Copy application code
 COPY . .
+
+# Copy gammurc to both system and user locations
+COPY docker/gammu/gammurc /etc/gammurc
+COPY docker/gammu/gammurc /home/gammuuser/.config/gammu/config
+
+# Set environment variable for XDG config
+ENV XDG_CONFIG_HOME=/home/gammuuser/.config
 
 # Save schema.sql as template in a different location
 RUN cp /app/database/schema.sql /app/templates/schema.sql.template
@@ -57,9 +68,10 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo '    ls -l /dev/ttyUSB3' >> /entrypoint.sh && \
     echo '    id gammuuser' >> /entrypoint.sh && \
     echo '    groups gammuuser' >> /entrypoint.sh && \
+    echo '    ls -l /etc/gammurc /home/gammuuser/.config/gammu/config' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
-    echo 'chown -R gammuuser:dialout /app/database /app/logs' >> /entrypoint.sh && \
-    echo 'chmod -R 775 /app/database /app/logs' >> /entrypoint.sh && \
+    echo 'chown -R gammuuser:dialout /app/database /app/logs /home/gammuuser/.config' >> /entrypoint.sh && \
+    echo 'chmod -R 775 /app/database /app/logs /home/gammuuser/.config' >> /entrypoint.sh && \
     echo 'exec gosu gammuuser "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
@@ -70,9 +82,9 @@ ENV PATH="/app/venv/bin:$PATH"
 # Install Python dependencies in virtual environment
 RUN . /app/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 
-# Set permissions for app directory
-RUN chown -R gammuuser:dialout /app && \
-    chmod -R 755 /app
+# Set permissions for app directory and config
+RUN chown -R gammuuser:dialout /app /home/gammuuser/.config && \
+    chmod -R 755 /app /home/gammuuser/.config
 
 # Expose port
 EXPOSE 4001
