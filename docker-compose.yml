@@ -11,6 +11,10 @@ services:
       - /home/YOUR_USER_FOLDER/sms-tool/database:/app/database
       - /home/YOUR_USER_FOLDER/sms-tool/logs:/app/logs
       - ./docker/gammu/gammurc:/root/gammurc
+      - type: bind
+        source: ./database/schema.sql
+        target: /app/database/schema.sql
+        read_only: true
     devices:
       - /dev/ttyUSB3
     environment:

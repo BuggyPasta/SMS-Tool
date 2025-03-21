@@ -22,8 +22,24 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /app
 RUN mkdir -p /app/database /app/logs
 
+# Debug: Show current directory contents before copy
+RUN echo "=== Before COPY ===" && \
+    pwd && \
+    ls -la
+
 # Copy entire application code first
 COPY . .
+
+# Debug: Show what was copied
+RUN echo "=== After COPY ===" && \
+    pwd && \
+    ls -la && \
+    echo "=== Database Directory ===" && \
+    ls -la /app/database/ || true && \
+    echo "=== Root Directory ===" && \
+    ls -la / && \
+    echo "=== App Directory ===" && \
+    ls -la /app
 
 # Verify schema.sql exists and is readable
 RUN ls -la /app/database/schema.sql && \
