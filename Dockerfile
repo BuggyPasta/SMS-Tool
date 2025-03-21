@@ -72,6 +72,12 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
     echo 'chown -R gammuuser:dialout /app/database /app/logs /home/gammuuser/.config' >> /entrypoint.sh && \
     echo 'chmod -R 775 /app/database /app/logs /home/gammuuser/.config' >> /entrypoint.sh && \
+    echo 'echo "Running preflight checks..."' >> /entrypoint.sh && \
+    echo 'gosu gammuuser python3 /app/app/preflight.py' >> /entrypoint.sh && \
+    echo 'if [ $? -ne 0 ]; then' >> /entrypoint.sh && \
+    echo '    echo "Preflight checks failed. Please check the logs above."' >> /entrypoint.sh && \
+    echo '    exit 1' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
     echo 'exec gosu gammuuser "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 

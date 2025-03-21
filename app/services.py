@@ -39,17 +39,34 @@ class GammuService:
     def connect(self):
         """Connect to the modem"""
         try:
+            # Log current user and permissions
+            logger.info(f"Current user: {os.getuid()}")
+            logger.info(f"Current groups: {os.getgroups()}")
+            if os.path.exists('/dev/ttyUSB3'):
+                logger.info(f"Device exists and has permissions: {oct(os.stat('/dev/ttyUSB3').st_mode)}")
+            else:
+                logger.info("Device /dev/ttyUSB3 does not exist")
+
             # Initialize state machine
             self.state_machine = gammu.StateMachine()
+            logger.info("State machine created")
             
             # Read configuration from gammurc
+            logger.info("Reading config from /etc/gammurc")
+            with open('/etc/gammurc', 'r') as f:
+                logger.info(f"gammurc contents:\n{f.read()}")
             self.state_machine.ReadConfig(Filename='/etc/gammurc')
+            logger.info("Config read successfully")
             
             # Initialize the connection
+            logger.info("Attempting to initialize connection...")
             self.state_machine.Init()
             logger.info("Successfully connected to modem")
         except Exception as e:
             logger.error(f"Failed to connect to modem: {str(e)}")
+            logger.error(f"Error type: {type(e)}")
+            if hasattr(e, '__dict__'):
+                logger.error(f"Error attributes: {e.__dict__}")
             raise ModemError(f"Failed to connect to modem: {str(e)}")
 
     def send_sms(self, phone_number, message, message_id):
