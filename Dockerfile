@@ -21,8 +21,10 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Create app directory and necessary subdirectories
 WORKDIR /app
 
-# Create necessary directories
-RUN mkdir -p /app/database /app/logs
+# First, copy just the schema file and create directories
+COPY database/schema.sql /app/database/schema.sql
+RUN mkdir -p /app/logs && \
+    chmod 644 /app/database/schema.sql
 
 # Copy application code
 COPY . .
