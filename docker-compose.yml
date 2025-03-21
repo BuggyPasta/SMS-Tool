@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   sms-tool:
-    build: .
+    build:
+      context: https://github.com/BuggyPasta/SMS-Tool.git#main
+      dockerfile: Dockerfile
     container_name: sms-tool
     restart: unless-stopped
     privileged: true
