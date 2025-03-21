@@ -26,8 +26,9 @@ class GammuService:
             gammu_config = {
                 'Device': '/dev/ttyUSB3',
                 'Connection': 'at',
-                'StartInfo': 'yes',
-                'Use_Locking': 'yes',
+                'LogFile': '/app/logs/gammu.log',
+                'LogFormat': 'textall',
+                'Start': 'yes',
                 'Debug': '1'
             }
             
