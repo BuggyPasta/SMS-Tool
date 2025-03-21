@@ -2,7 +2,6 @@
 [gammu]
 Device = /dev/ttyUSB3
 Connection = at
-Synchronize = yes
 Start = yes
 Use_Locking = yes
 Debug = 1
@@ -10,7 +9,6 @@ Debug = 1
 [gammu1]
 Device = /dev/ttyUSB3
 Connection = at
-Synchronize = yes
 Start = yes
 Use_Locking = yes
 Debug = 1 
