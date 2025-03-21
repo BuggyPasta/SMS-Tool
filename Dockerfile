@@ -36,9 +36,8 @@ RUN mkdir -p /app/database /app/logs /app/templates && \
     touch /app/logs/gammu.log && \
     chmod 666 /app/logs/gammu.log
 
-# Create system user and add to dialout group
-RUN adduser --system --no-create-home gammuuser && \
-    usermod -a -G dialout gammuuser
+# Create system user with dialout as primary group
+RUN adduser --system --no-create-home --ingroup dialout gammuuser
 
 # Copy application code
 COPY . .

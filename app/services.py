@@ -39,17 +39,11 @@ class GammuService:
     def connect(self):
         """Connect to the modem"""
         try:
-            # Create Gammu configuration with only essential settings
-            gammu_config = {
-                'Device': '/dev/ttyUSB3',
-                'Connection': 'at'
-            }
-            
             # Initialize state machine
             self.state_machine = gammu.StateMachine()
             
-            # Set configuration programmatically
-            self.state_machine.SetConfig(0, gammu_config)
+            # Read configuration from gammurc
+            self.state_machine.ReadConfig()
             
             # Initialize the connection
             self.state_machine.Init()
