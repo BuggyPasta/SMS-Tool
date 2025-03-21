@@ -14,7 +14,7 @@ from werkzeug.local import LocalProxy
 
 # Constants
 DEFAULT_LOG_LEVEL = logging.INFO
-DEFAULT_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(request_id)s - %(message)s'
+DEFAULT_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s' if has_request_context() else '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 DEFAULT_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_DIR = Path('/app/logs')
 MAX_BYTES = 10 * 1024 * 1024  # 10MB
@@ -23,7 +23,8 @@ BACKUP_COUNT = 5
 class RequestIdFilter(logging.Filter):
     """Add request_id to log records if available."""
     def filter(self, record):
-        record.request_id = get_request_id() if has_request_context() else 'no_request'
+        if not hasattr(record, 'request_id'):
+            record.request_id = get_request_id() if has_request_context() else 'no_request'
         return True
 
 def get_request_id() -> str:

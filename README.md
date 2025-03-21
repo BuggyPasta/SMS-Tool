@@ -36,22 +36,36 @@ A Flask-based web application for sending SMS messages using a GSM modem. This a
 
 ## Deployment with Dockge
 
-1. Clone this repository to your Dockge server
-2. Create the following directory structure for data persistence:
+1. Clone this repository to your Dockge server:
+   ```bash
+   git clone https://github.com/BuggyPasta/SMS-Tool.git
+   cd SMS-Tool
    ```
-   /home/ovenking/docker_backup/sms_tool/
-   ├── database/
-   └── logs/
+
+2. Run the preparation script to set up the host environment:
+   ```bash
+   chmod +x prepare_host.sh
+   sudo ./prepare_host.sh
    ```
-3. Ensure your GSM modem is connected and recognized (usually as /dev/ttyUSB3)
-4. Create a stack in Dockge using the provided docker-compose.yml
-5. Set the following environment variables in Dockge:
+
+3. Ensure your user is in the dialout group (the script will remind you):
+   ```bash
+   sudo usermod -a -G dialout $USER
+   # Log out and back in for the changes to take effect
+   ```
+
+4. Ensure your GSM modem is connected and recognized (usually as /dev/ttyUSB3)
+
+5. Create a stack in Dockge using the provided docker-compose.yml
+
+6. Set the following environment variables in Dockge:
    - SECRET_KEY: Your secure secret key
-6. Deploy the stack
+
+7. Deploy the stack
 
 The application will:
-- Initialize the database automatically on first run
-- Create necessary log files
+- Use the pre-initialized database schema
+- Write logs to the prepared logs directory
 - Set up the SMS queue system
 - Configure the Gammu service for your modem
 
@@ -93,13 +107,20 @@ To backup your data, simply archive the `/home/ovenking/docker_backup/sms_tool/`
    - Check the logs at `/home/ovenking/docker_backup/sms_tool/logs/app.log`
    - Verify the GSM modem is properly connected
    - Ensure all required directories exist and have proper permissions
+   - Check that your user is in the dialout group: `groups $USER`
+   - Verify the schema.sql file exists in the database directory
 
-2. If SMS sending fails:
+2. If you see permission errors:
+   - Run the prepare_host.sh script again
+   - Ensure you've logged out and back in after adding your user to the dialout group
+   - Check directory permissions: `ls -la /home/ovenking/docker_backup/sms_tool/`
+
+3. If SMS sending fails:
    - Check the modem status in the admin dashboard
    - Verify the SIM card is properly inserted and activated
    - Check the signal strength indicator
 
-3. For other issues:
+4. For other issues:
    - Review the application logs
    - Check the container logs in Dockge
    - Verify all environment variables are set correctly
