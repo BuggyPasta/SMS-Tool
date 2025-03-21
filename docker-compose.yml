@@ -11,7 +11,6 @@ services:
     volumes:
       - /home/ovenking/docker_backup/sms_tool/database:/app/database
       - /home/ovenking/docker_backup/sms_tool/logs:/app/logs
-      - /etc/gammurc:/root/gammurc
     devices:
       - /dev/ttyUSB3
     environment:
@@ -20,7 +19,6 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - TZ=Europe/London
       - PYTHONUNBUFFERED=1
-      - GAMMU_CONFIG=/root/gammurc
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4001/health"]

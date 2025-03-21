@@ -4,6 +4,7 @@ Business logic and services
 
 import gammu
 import logging
+import os
 from datetime import datetime
 import pytz
 from .config import Config
@@ -21,8 +22,23 @@ class GammuService:
     def connect(self):
         """Connect to the modem"""
         try:
+            # Create Gammu configuration
+            gammu_config = {
+                'Device': '/dev/ttyUSB3',
+                'Connection': 'at',
+                'LogFile': '/app/logs/gammu.log',
+                'LogFormat': 'textall',
+                'SynchronizeTime': 'yes',
+                'UseGlobalDebugFile': '1'
+            }
+            
+            # Initialize state machine
             self.state_machine = gammu.StateMachine()
-            self.state_machine.ReadConfig(Config.GAMMU_CONFIG)
+            
+            # Set configuration programmatically
+            self.state_machine.SetConfig(0, gammu_config)
+            
+            # Initialize the connection
             self.state_machine.Init()
             logger.info("Successfully connected to modem")
         except Exception as e:
