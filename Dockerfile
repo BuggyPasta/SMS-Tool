@@ -1,18 +1,21 @@
-# Use Alpine Linux as base image
-FROM alpine:3.19
+# Use Debian slim as base image
+FROM debian:bullseye-slim
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3 \
-    py3-pip \
-    python3-dev \
-    gammu=1.42.0-r1 \
-    gammu-dev=1.42.0-r1 \
+    python3-pip \
+    python3-venv \
+    gammu \
+    libgammu-dev \
     gcc \
-    musl-dev \
-    linux-headers \
-    pkgconfig \
-    tzdata
+    pkg-config \
+    tzdata \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set timezone to London
 ENV TZ=Europe/London
@@ -27,9 +30,8 @@ RUN mkdir -p /app/database /app/logs /app/templates && \
     touch /app/logs/gammu.log && \
     chmod 666 /app/logs/gammu.log
 
-# Add dialout group and set permissions
-RUN addgroup -S dialout && \
-    chmod 660 /dev/ttyUSB* 2>/dev/null || true
+# Ensure dialout group exists and set permissions
+RUN getent group dialout || groupadd -r dialout
 
 # Copy application code
 COPY . .
@@ -38,12 +40,15 @@ COPY . .
 RUN cp /app/database/schema.sql /app/templates/schema.sql.template
 
 # Create entrypoint script
-RUN echo '#!/bin/sh' > /entrypoint.sh && \
+RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo 'if [ ! -f /app/database/schema.sql ]; then' >> /entrypoint.sh && \
     echo '    cp /app/templates/schema.sql.template /app/database/schema.sql' >> /entrypoint.sh && \
     echo '    chmod 644 /app/database/schema.sql' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
-    echo 'chmod 660 /dev/ttyUSB* 2>/dev/null || true' >> /entrypoint.sh && \
+    echo 'if [ -e /dev/ttyUSB3 ]; then' >> /entrypoint.sh && \
+    echo '    chmod 660 /dev/ttyUSB3' >> /entrypoint.sh && \
+    echo '    chown root:dialout /dev/ttyUSB3' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
     echo 'exec "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 

@@ -23,7 +23,7 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      test: ["CMD", "which curl || (apt-get update && apt-get install -y curl)", "&&", "curl", "-f", "http://localhost:4001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
