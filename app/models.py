@@ -8,7 +8,7 @@ from datetime import datetime
 import pytz
 from .config import Config
 import logging
-from .database import get_db, init_db, is_connected  # Import from database.py
+from .database import get_db, init_db  # Remove is_connected from imports
 
 logger = logging.getLogger(__name__)
 
