@@ -70,10 +70,13 @@ def create_app():
         raise
 
     # Register blueprints
-    from .routes import auth_bp, admin_bp, user_bp
+    from .routes import auth_bp, admin_bp, user_bp, register_health_check
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)
+    
+    # Register health check endpoint
+    register_health_check(app)
 
     @app.before_request
     def before_request():

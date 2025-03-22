@@ -2,9 +2,9 @@
 Application routes
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from functools import wraps
-from .models import User, Template, Message
+from .models import User, Template, Message, get_db
 from .services.gammu_service import GammuService
 from .exceptions import GammuError, ModemError, SIMError, NetworkError, ErrorCode
 import re
@@ -64,6 +64,102 @@ def standardize_health_response(status: str, components: dict = None, error: str
     
     status_code = 200 if status == 'healthy' else 500
     return jsonify(response), status_code
+
+def register_health_check(app):
+    """Register health check endpoint directly on the app"""
+    @app.route('/health')
+    def health_check():
+        """Check health of all system components"""
+        if not check_rate_limit():
+            logger.warning("Rate limit exceeded for health check")
+            return standardize_health_response(
+                'degraded',
+                error='Rate limit exceeded'
+            )
+
+        components = {
+            'database': {'status': 'unknown'},
+            'modem': {'status': 'unknown'},
+            'sim': {'status': 'unknown'},
+            'network': {'status': 'unknown'}
+        }
+        
+        try:
+            # Check database
+            db = get_db()
+            db.execute('SELECT 1')
+            components['database'] = {
+                'status': 'healthy',
+                'message': 'Database connection successful'
+            }
+            db.close()
+        except Exception as e:
+            logger.error(f"Database health check failed: {e}")
+            components['database'] = {
+                'status': 'unhealthy',
+                'error': str(e)
+            }
+            return standardize_health_response('unhealthy', components)
+
+        try:
+            # Check modem status
+            if not gammu_service or not gammu_service.is_connected():
+                raise ModemError("Modem is not connected", ErrorCode.MODEM_NOT_CONNECTED)
+                
+            # Get modem info
+            modem_info = gammu_service.get_modem_status()
+            components['modem'] = {
+                'status': 'healthy',
+                'info': modem_info
+            }
+            
+            # Get SIM status
+            sim_info = gammu_service.get_sim_status()
+            components['sim'] = {
+                'status': 'healthy',
+                'info': sim_info
+            }
+            
+            # Get network status
+            network_info = gammu_service.get_network_status()
+            components['network'] = {
+                'status': 'healthy',
+                'info': network_info
+            }
+            
+        except ModemError as e:
+            logger.error(f"Modem health check failed: {e}")
+            components['modem'] = {
+                'status': 'unhealthy',
+                'error': str(e)
+            }
+            return standardize_health_response('unhealthy', components)
+            
+        except SIMError as e:
+            logger.error(f"SIM health check failed: {e}")
+            components['sim'] = {
+                'status': 'unhealthy',
+                'error': str(e)
+            }
+            return standardize_health_response('unhealthy', components)
+            
+        except NetworkError as e:
+            logger.error(f"Network health check failed: {e}")
+            components['network'] = {
+                'status': 'unhealthy',
+                'error': str(e)
+            }
+            return standardize_health_response('unhealthy', components)
+            
+        except Exception as e:
+            logger.error(f"Unexpected error during health check: {e}")
+            return standardize_health_response(
+                'unhealthy',
+                components,
+                f"Unexpected error: {str(e)}"
+            )
+
+        return standardize_health_response('healthy', components)
 
 def login_required(f):
     @wraps(f)
@@ -187,99 +283,6 @@ def delete_all_messages():
     else:
         flash('Failed to delete messages', 'error')
     return redirect(url_for('admin.sms_report'))
-
-@admin_bp.route('/health')
-def health_check():
-    """Check health of all system components"""
-    if not check_rate_limit():
-        logger.warning("Rate limit exceeded for health check")
-        return standardize_health_response(
-            'degraded',
-            error='Rate limit exceeded'
-        )
-
-    components = {
-        'database': {'status': 'unknown'},
-        'modem': {'status': 'unknown'},
-        'sim': {'status': 'unknown'},
-        'network': {'status': 'unknown'}
-    }
-    
-    try:
-        # Check database
-        from .models import db
-        db.session.execute('SELECT 1')
-        components['database'] = {
-            'status': 'healthy',
-            'message': 'Database connection successful'
-        }
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        components['database'] = {
-            'status': 'unhealthy',
-            'error': str(e)
-        }
-        return standardize_health_response('unhealthy', components)
-
-    try:
-        # Check modem status
-        if not gammu_service or not gammu_service.is_connected():
-            raise ModemError("Modem is not connected", ErrorCode.MODEM_NOT_CONNECTED)
-            
-        # Get modem info
-        modem_info = gammu_service.get_modem_status()
-        components['modem'] = {
-            'status': 'healthy',
-            'info': modem_info
-        }
-        
-        # Get SIM status
-        sim_info = gammu_service.get_sim_status()
-        components['sim'] = {
-            'status': 'healthy',
-            'info': sim_info
-        }
-        
-        # Get network status
-        network_info = gammu_service.get_network_status()
-        components['network'] = {
-            'status': 'healthy',
-            'info': network_info
-        }
-        
-    except ModemError as e:
-        logger.error(f"Modem health check failed: {e}")
-        components['modem'] = {
-            'status': 'unhealthy',
-            'error': str(e)
-        }
-        return standardize_health_response('unhealthy', components)
-        
-    except SIMError as e:
-        logger.error(f"SIM health check failed: {e}")
-        components['sim'] = {
-            'status': 'unhealthy',
-            'error': str(e)
-        }
-        return standardize_health_response('unhealthy', components)
-        
-    except NetworkError as e:
-        logger.error(f"Network health check failed: {e}")
-        components['network'] = {
-            'status': 'unhealthy',
-            'error': str(e)
-        }
-        return standardize_health_response('unhealthy', components)
-        
-    except Exception as e:
-        logger.error(f"Unexpected error during health check: {e}")
-        return standardize_health_response(
-            'unhealthy',
-            components,
-            f"Unexpected error: {str(e)}"
-        )
-
-    return standardize_health_response('healthy', components)
 
 # User routes
 @user_bp.route('/')
