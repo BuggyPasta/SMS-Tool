@@ -33,10 +33,11 @@ def signal_handler(signum, frame):
 def cleanup_gammu():
     """Clean up Gammu service"""
     global gammu_service
-    if gammu_service:
+    if gammu_service and gammu_service.is_connected():
         logger.info("Cleaning up Gammu service")
         try:
             gammu_service.disconnect()
+            logger.info("Successfully disconnected Gammu service")
         except Exception as e:
             logger.error(f"Error during Gammu cleanup: {e}")
 

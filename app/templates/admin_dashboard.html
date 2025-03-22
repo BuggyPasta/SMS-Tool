@@ -33,6 +33,7 @@
                     <h3>Modem</h3>
                     <p class="status-message">Checking...</p>
                     <div class="signal-strength"></div>
+                    <div class="details"></div>
                 </div>
             </div>
 
@@ -43,7 +44,7 @@
                 <div class="health-info">
                     <h3>SIM Card</h3>
                     <p class="status-message">Checking...</p>
-                    <p class="details"></p>
+                    <div class="details"></div>
                 </div>
             </div>
 
@@ -54,27 +55,43 @@
                 <div class="health-info">
                     <h3>Network</h3>
                     <p class="status-message">Checking...</p>
-                    <p class="details"></p>
+                    <div class="details"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions Section -->
     <div class="dashboard-section">
-        <h2>Quick Actions</h2>
-        <div class="button-grid">
-            <a href="{{ url_for('admin.manage_users') }}" class="dashboard-button">
-                <img src="{{ url_for('static', filename='icons/user.svg') }}" alt="Users">
-                <span>Manage Users</span>
+        <h2>Management</h2>
+        <div class="management-grid">
+            <a href="{{ url_for('admin.manage_users') }}" class="management-card">
+                <div class="card-icon">
+                    <img src="{{ url_for('static', filename='icons/users.svg') }}" alt="Users">
+                </div>
+                <div class="card-info">
+                    <h3>Manage Users</h3>
+                    <p>Add, edit, or remove user accounts</p>
+                </div>
             </a>
-            <a href="{{ url_for('admin.manage_templates') }}" class="dashboard-button">
-                <img src="{{ url_for('static', filename='icons/template.svg') }}" alt="Templates">
-                <span>Manage Templates</span>
+
+            <a href="{{ url_for('admin.manage_templates') }}" class="management-card">
+                <div class="card-icon">
+                    <img src="{{ url_for('static', filename='icons/templates.svg') }}" alt="Templates">
+                </div>
+                <div class="card-info">
+                    <h3>Manage Templates</h3>
+                    <p>Create and edit message templates</p>
+                </div>
             </a>
-            <a href="{{ url_for('admin.sms_report') }}" class="dashboard-button">
-                <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Reports">
-                <span>SMS Reports</span>
+
+            <a href="{{ url_for('admin.sms_report') }}" class="management-card">
+                <div class="card-icon">
+                    <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Report">
+                </div>
+                <div class="card-info">
+                    <h3>SMS Report</h3>
+                    <p>View message history and statistics</p>
+                </div>
             </a>
         </div>
     </div>
@@ -193,6 +210,57 @@
 </style>
 
 <script>
+function formatModemInfo(info) {
+    if (!info) return '';
+    const details = [];
+    
+    if (info.signal) {
+        details.push(`Signal: ${info.signal.SignalPercent}%`);
+    }
+    if (info.battery) {
+        details.push(`Battery: ${info.battery.BatteryPercent}%`);
+    }
+    if (info.manufacturer) {
+        details.push(`Manufacturer: ${info.manufacturer}`);
+    }
+    if (info.model) {
+        details.push(`Model: ${info.model}`);
+    }
+    
+    return details.join('<br>');
+}
+
+function formatSIMInfo(info) {
+    if (!info) return '';
+    const details = [];
+    
+    if (info.imsi) {
+        details.push(`IMSI: ${info.imsi}`);
+    }
+    if (info.status) {
+        details.push(`Status: ${info.status}`);
+    }
+    
+    return details.join('<br>');
+}
+
+function formatNetworkInfo(info) {
+    if (!info) return '';
+    const details = [];
+    
+    if (info.NetworkName) {
+        details.push(`Network: ${info.NetworkName}`);
+    }
+    if (info.State) {
+        details.push(`State: ${info.State}`);
+    }
+    if (info.PacketState) {
+        details.push(`Packet: ${info.PacketState}`);
+    }
+    
+    return details.join('<br>');
+}
+
 function updateHealthStatus() {
     fetch('/health')
         .then(response => response.json())
@@ -205,23 +273,23 @@ function updateHealthStatus() {
             // Update modem health
             const modemCard = document.getElementById('modem-health');
             modemCard.className = `health-card ${data.components.modem.status}`;
-            modemCard.querySelector('.status-message').textContent = data.components.modem.info || data.components.modem.status;
-            const signalBar = modemCard.querySelector('.signal-strength');
-            if (data.components.modem.info && data.components.modem.info.SignalPercent) {
-                signalBar.style.setProperty('--signal-strength', `${data.components.modem.info.SignalPercent}%`);
+            modemCard.querySelector('.status-message').textContent = data.components.modem.status;
+            if (data.components.modem.info && data.components.modem.info.signal) {
+                modemCard.querySelector('.signal-strength').style.setProperty('--signal-strength', `${data.components.modem.info.signal.SignalPercent}%`);
             }
+            modemCard.querySelector('.details').innerHTML = formatModemInfo(data.components.modem.info);
 
             // Update SIM health
             const simCard = document.getElementById('sim-health');
             simCard.className = `health-card ${data.components.sim.status}`;
-            simCard.querySelector('.status-message').textContent = data.components.sim.info || data.components.sim.status;
-            simCard.querySelector('.details').textContent = data.components.sim.info ? JSON.stringify(data.components.sim.info) : '';
+            simCard.querySelector('.status-message').textContent = data.components.sim.status;
+            simCard.querySelector('.details').innerHTML = formatSIMInfo(data.components.sim.info);
 
             // Update network health
             const networkCard = document.getElementById('network-health');
             networkCard.className = `health-card ${data.components.network.status}`;
-            networkCard.querySelector('.status-message').textContent = data.components.network.info || data.components.network.status;
-            networkCard.querySelector('.details').textContent = data.components.network.info ? JSON.stringify(data.components.network.info) : '';
+            networkCard.querySelector('.status-message').textContent = data.components.network.status;
+            networkCard.querySelector('.details').innerHTML = formatNetworkInfo(data.components.network.info);
         })
         .catch(error => {
             console.error('Error fetching health status:', error);
@@ -229,6 +297,8 @@ function updateHealthStatus() {
             document.querySelectorAll('.health-card').forEach(card => {
                 card.className = 'health-card unhealthy';
                 card.querySelector('.status-message').textContent = 'Connection error';
+                const details = card.querySelector('.details');
+                if (details) details.textContent = '';
             });
         });
 }

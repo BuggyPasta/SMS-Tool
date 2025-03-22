@@ -112,12 +112,8 @@ def register_health_check(app):
                 logger.error("Gammu service not initialized")
                 raise ModemError("Modem service not initialized", ErrorCode.MODEM_NOT_CONNECTED)
             
-            if not gammu_service.is_connected():
-                logger.error("Modem not connected")
-                raise ModemError("Modem is not connected", ErrorCode.MODEM_NOT_CONNECTED)
-                
             # Get modem info
-            modem_info = gammu_service.get_modem_status()
+            modem_info = gammu_service.get_modem_info()
             components['modem'] = {
                 'status': 'healthy',
                 'info': modem_info

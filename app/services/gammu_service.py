@@ -6,8 +6,6 @@ import gammu
 import logging
 import os
 import threading
-from datetime import datetime, timedelta
-import time
 from typing import Dict, Any, Optional
 from ..config import Config
 from ..models import Message
@@ -23,46 +21,6 @@ from ..exceptions import (
 
 # Get logger
 logger = logging.getLogger('gammu')
-
-class ConnectionState:
-    """Thread-safe connection state cache"""
-    def __init__(self, cache_duration: int = 5):
-        self.lock = threading.Lock()
-        self._cache_duration = cache_duration  # seconds
-        self._reset()
-    
-    def _reset(self) -> None:
-        """Reset all cached values"""
-        self._modem_status = None
-        self._signal_strength = None
-        self._battery_status = None
-        self._sim_status = None
-        self._last_update = None
-    
-    def _is_cache_valid(self) -> bool:
-        """Check if cache is still valid"""
-        if self._last_update is None:
-            return False
-        return (datetime.now() - self._last_update) < timedelta(seconds=self._cache_duration)
-    
-    def update(self, **kwargs) -> None:
-        """Update cached values"""
-        with self.lock:
-            for key, value in kwargs.items():
-                setattr(self, f"_{key}", value)
-            self._last_update = datetime.now()
-    
-    def get(self, key: str) -> Any:
-        """Get cached value if valid, otherwise return None"""
-        with self.lock:
-            if self._is_cache_valid():
-                return getattr(self, f"_{key}")
-            return None
-    
-    def invalidate(self) -> None:
-        """Invalidate all cached values"""
-        with self.lock:
-            self._reset()
 
 class GammuService:
     """Thread-safe singleton service for Gammu SMS functionality"""
@@ -152,24 +110,36 @@ class GammuService:
         with self._lock:
             return self.connected and self.state_machine is not None
 
-    def get_modem_status(self):
-        """Get modem status information"""
-        logger.debug("Getting modem status")
+    def get_modem_info(self) -> Dict[str, Any]:
+        """Get comprehensive modem information"""
+        logger.debug("Getting modem information")
         try:
             if not self.connected:
                 self.connect()
-            return self.state_machine.GetSecurityStatus()
+            
+            info = {
+                'security': self.state_machine.GetSecurityStatus(),
+                'signal': self.state_machine.GetSignalQuality(),
+                'battery': self.state_machine.GetBatteryCharge(),
+                'manufacturer': self.state_machine.GetManufacturer(),
+                'model': self.state_machine.GetModel()
+            }
+            return info
         except Exception as e:
-            logger.error(f"Failed to get modem status: {e}")
-            raise ModemError(f"Failed to get modem status: {str(e)}", ErrorCode.MODEM_STATUS_ERROR)
+            logger.error(f"Failed to get modem info: {e}")
+            raise ModemError(f"Failed to get modem info: {str(e)}", ErrorCode.MODEM_STATUS_ERROR)
 
-    def get_sim_status(self):
+    def get_sim_status(self) -> Dict[str, Any]:
         """Get SIM card status"""
         logger.debug("Getting SIM status")
         try:
             if not self.connected:
                 self.connect()
-            return self.state_machine.GetSIMIMSI()
+            
+            return {
+                'imsi': self.state_machine.GetSIMIMSI(),
+                'status': self.state_machine.GetSIMStatus()
+            }
         except gammu.ERR_SECURITYERROR:
             logger.error("SIM card locked")
             raise SIMError("SIM card is locked", ErrorCode.SIM_LOCKED)
@@ -180,7 +150,7 @@ class GammuService:
             logger.error(f"Failed to get SIM status: {e}")
             raise SIMError(f"Failed to get SIM status: {str(e)}", ErrorCode.SIM_STATUS_ERROR)
 
-    def get_network_status(self):
+    def get_network_status(self) -> Dict[str, Any]:
         """Get network status"""
         logger.debug("Getting network status")
         try:
@@ -225,66 +195,4 @@ class GammuService:
             raise NetworkError("Failed to send SMS: Timeout", ErrorCode.NETWORK_TIMEOUT)
         except Exception as e:
             logger.error(f"Failed to send SMS: {e}")
-            raise GammuError(f"Failed to send SMS: {str(e)}", ErrorCode.SMS_SEND_ERROR)
-
-    def check_modem_status(self) -> bool:
-        """Check modem status and network registration"""
-        def fetch_status():
-            status = self.state_machine.GetNetworkInfo()
-            return status['NetworkCode'] != 0
-            
-        return self._get_cached_state(
-            'modem_status',
-            fetch_status,
-            ErrorCode.MODEM_NOT_RESPONDING
-        )
-
-    def get_signal_strength(self) -> int:
-        """Get signal strength"""
-        def fetch_signal():
-            status = self.state_machine.GetSignalQuality()
-            return status['SignalPercent']
-            
-        return self._get_cached_state(
-            'signal_strength',
-            fetch_signal,
-            ErrorCode.MODEM_NOT_RESPONDING
-        )
-
-    def get_battery_status(self) -> int:
-        """Get battery status"""
-        def fetch_battery():
-            status = self.state_machine.GetBatteryCharge()
-            return status['BatteryPercent']
-            
-        return self._get_cached_state(
-            'battery_status',
-            fetch_battery,
-            ErrorCode.MODEM_NOT_RESPONDING
-        )
-
-    def get_sim_status(self) -> Optional[str]:
-        """Get SIM card status"""
-        def fetch_sim():
-            status = self.state_machine.GetSIMStatus()
-            return status['SIMStatus']
-            
-        return self._get_cached_state(
-            'sim_status',
-            fetch_sim,
-            ErrorCode.SIM_NOT_DETECTED
-        )
-
-    def close(self):
-        """Close connection to modem"""
-        with self._lock:
-            if self.state_machine and self._is_connected:
-                try:
-                    self.state_machine.Terminate()
-                    logger.info("Modem connection closed")
-                except Exception as e:
-                    logger.error(f"Error closing modem connection: {e}")
-                finally:
-                    self._is_connected = False
-                    self.state_machine = None
-                    self._state.invalidate() 
+            raise GammuError(f"Failed to send SMS: {str(e)}", ErrorCode.SMS_SEND_ERROR) 
