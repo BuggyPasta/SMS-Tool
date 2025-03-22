@@ -19,8 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create necessary directories
 RUN mkdir -p /app/instance /app/logs
 
-# Copy Gammu configuration
-COPY gammurc /etc/gammurc
+# Create Gammu configuration
+RUN echo -e "[gammu]\ndevice = /dev/ttyUSB3\nconnection = at\nlogfile = /app/logs/gammu.log\nloglevel = debug" > /etc/gammurc
 
 # Set entrypoint
 COPY entrypoint.sh /entrypoint.sh
