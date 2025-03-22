@@ -324,74 +324,70 @@ def dashboard():
     templates = Template.get_all()
     return render_template('user_dashboard.html', templates=templates)
 
-@user_bp.route('/send-sms', methods=['GET', 'POST'])
+@user_bp.route('/send-sms', methods=['POST'])
 @login_required
 def send_sms():
-    if request.method == 'POST':
-        phone_number = request.form.get('phone_number')
-        message = request.form.get('message')
-        
-        # Validate phone number
-        if not re.match(r'^07\d{9}$', phone_number):
-            flash('Invalid phone number. Must start with 07 and be 11 digits long.', 'error')
-            return render_template('send_sms.html')
-        
-        # Check for repeated characters
-        if re.search(r'(.)\1{3,}', message):
-            flash('Message contains too many repeated characters. Please correct and try again.', 'error')
-            return render_template('send_sms.html')
-        
-        message_id = None
-        try:
-            # Create message record
-            message_id = Message.create(phone_number, message, session['user_id'])
-            if not message_id:
-                flash('Failed to save message. Please try again.', 'error')
-                return redirect(url_for('user.send_sms'))
-
-            # Send message
-            if gammu_service.send_sms(phone_number, message, message_id):
-                Message.update_status(message_id, 'sent')
-                flash('Message sent successfully', 'success')
-            else:
-                Message.update_status(message_id, 'failed')
-                flash('Failed to send message. Please try again.', 'error')
-
-        except ModemError as e:
-            logger.error(f"Modem error: {str(e)}")
-            if message_id:
-                Message.update_status(message_id, 'failed', str(e))
-            flash(f'Modem error: {str(e)}. Please check the modem connection.', 'error')
-        except SIMError as e:
-            logger.error(f"SIM error: {str(e)}")
-            if message_id:
-                Message.update_status(message_id, 'failed', str(e))
-            flash(f'SIM card error: {str(e)}. Please check the SIM card.', 'error')
-        except NetworkError as e:
-            logger.error(f"Network error: {str(e)}")
-            if message_id:
-                Message.update_status(message_id, 'failed', str(e))
-            flash(f'Network error: {str(e)}. Please check the network connection.', 'error')
-        except ValueError as e:
-            logger.error(f"Validation error: {str(e)}")
-            if message_id:
-                Message.update_status(message_id, 'failed', str(e))
-            flash(f'Message validation error: {str(e)}. Please correct and try again.', 'error')
-        except GammuError as e:
-            logger.error(f"Gammu error: {str(e)}")
-            if message_id:
-                Message.update_status(message_id, 'failed', str(e))
-            flash(f'System error: {str(e)}. Please try again later.', 'error')
-        except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            if message_id:
-                Message.update_status(message_id, 'failed', str(e))
-            flash('An unexpected error occurred. Please try again later.', 'error')
-        
-        return redirect(url_for('user.send_sms'))
+    phone_number = request.form.get('phone_number')
+    message = request.form.get('message')
     
-    templates = Template.get_all()
-    return render_template('send_sms.html', templates=templates)
+    # Validate phone number
+    if not re.match(r'^07\d{9}$', phone_number):
+        flash('Invalid phone number. Must start with 07 and be 11 digits long.', 'error')
+        return redirect(url_for('user.dashboard'))
+    
+    # Check for repeated characters
+    if re.search(r'(.)\1{3,}', message):
+        flash('Message contains too many repeated characters. Please correct and try again.', 'error')
+        return redirect(url_for('user.dashboard'))
+    
+    message_id = None
+    try:
+        # Create message record
+        message_id = Message.create(phone_number, message, session['user_id'])
+        if not message_id:
+            flash('Failed to save message. Please try again.', 'error')
+            return redirect(url_for('user.dashboard'))
+
+        # Send message
+        if gammu_service.send_sms(phone_number, message, message_id):
+            Message.update_status(message_id, 'sent')
+            flash('Message sent successfully', 'success')
+        else:
+            Message.update_status(message_id, 'failed')
+            flash('Failed to send message. Please try again.', 'error')
+
+    except ModemError as e:
+        logger.error(f"Modem error: {str(e)}")
+        if message_id:
+            Message.update_status(message_id, 'failed', str(e))
+        flash(f'Modem error: {str(e)}. Please check the modem connection.', 'error')
+    except SIMError as e:
+        logger.error(f"SIM error: {str(e)}")
+        if message_id:
+            Message.update_status(message_id, 'failed', str(e))
+        flash(f'SIM card error: {str(e)}. Please check the SIM card.', 'error')
+    except NetworkError as e:
+        logger.error(f"Network error: {str(e)}")
+        if message_id:
+            Message.update_status(message_id, 'failed', str(e))
+        flash(f'Network error: {str(e)}. Please check the network connection.', 'error')
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        if message_id:
+            Message.update_status(message_id, 'failed', str(e))
+        flash(f'Message validation error: {str(e)}. Please correct and try again.', 'error')
+    except GammuError as e:
+        logger.error(f"Gammu error: {str(e)}")
+        if message_id:
+            Message.update_status(message_id, 'failed', str(e))
+        flash(f'System error: {str(e)}. Please try again later.', 'error')
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        if message_id:
+            Message.update_status(message_id, 'failed', str(e))
+        flash('An unexpected error occurred. Please try again later.', 'error')
+    
+    return redirect(url_for('user.dashboard'))
 
 @user_bp.route('/get-template/<title>')
 @login_required

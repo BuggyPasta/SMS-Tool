@@ -162,11 +162,41 @@
     margin-top: 0.5rem;
 }
 
+.header-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.header-actions .pure-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.header-actions .pure-button:hover {
+    background: #c82333;
+}
+
+.header-actions img {
+    width: 20px;
+    height: 20px;
+}
+
 .nav-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
     margin-top: 1rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 400px);
+    padding: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -188,6 +218,7 @@
     color: #333;
     transition: all 0.3s ease;
     height: 100%;
+    min-height: 150px;
 }
 
 .nav-button:hover {
@@ -207,6 +238,29 @@
     text-align: center;
 }
 
+/* Dark mode styles */
+body.dark-mode .nav-button {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .health-card {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .health-icon {
+    background: #1a1a1a;
+}
+
+body.dark-mode .health-info h3 {
+    color: #f8f9fa;
+}
+
+body.dark-mode .details {
+    color: #aaa;
+}
+
 .dashboard-section {
     margin-bottom: 2rem;
 }
@@ -219,7 +273,7 @@
 
 <script>
 function formatModemInfo(info) {
-    if (!info) return 'Connection error';
+    if (!info) return '';
     const details = [];
     
     if (info.signal) {
@@ -235,11 +289,11 @@ function formatModemInfo(info) {
         details.push(`Model: ${info.model}`);
     }
     
-    return details.join('<br>') || 'Connection error';
+    return details.join('<br>');
 }
 
 function formatSIMInfo(info) {
-    if (!info) return 'Connection error';
+    if (!info) return '';
     const details = [];
     
     if (info.imsi) {
@@ -249,11 +303,11 @@ function formatSIMInfo(info) {
         details.push(`Status: ${info.status}`);
     }
     
-    return details.join('<br>') || 'Connection error';
+    return details.join('<br>');
 }
 
 function formatNetworkInfo(info) {
-    if (!info) return 'Connection error';
+    if (!info) return '';
     const details = [];
     
     if (info.network) {
@@ -263,7 +317,7 @@ function formatNetworkInfo(info) {
         details.push(`Signal: ${info.signal}%`);
     }
     
-    return details.join('<br>') || 'Connection error';
+    return details.join('<br>');
 }
 
 function updateHealth() {
@@ -276,36 +330,42 @@ function updateHealth() {
             const dbCard = document.getElementById('database-health');
             const dbStatus = components.database?.status || 'unhealthy';
             dbCard.className = `health-card ${dbStatus}`;
-            dbCard.querySelector('.status-message').textContent = dbStatus === 'healthy' ? 'Connected' : 'Connection error';
+            dbCard.querySelector('.status-message').textContent = dbStatus === 'healthy' ? 'Connected' : 'Not Connected';
             
             // Update Modem
             const modemCard = document.getElementById('modem-health');
             const modemStatus = components.modem?.status || 'unhealthy';
             modemCard.className = `health-card ${modemStatus}`;
-            modemCard.querySelector('.status-message').textContent = modemStatus === 'healthy' ? 'Connected' : 'Connection error';
-            modemCard.querySelector('.details').innerHTML = formatModemInfo(components.modem?.info);
+            modemCard.querySelector('.status-message').textContent = modemStatus === 'healthy' ? 'Connected' : 'Not Connected';
+            if (components.modem?.info) {
+                modemCard.querySelector('.details').innerHTML = formatModemInfo(components.modem.info);
+            }
             
             // Update SIM
             const simCard = document.getElementById('sim-health');
             const simStatus = components.sim?.status || 'unhealthy';
             simCard.className = `health-card ${simStatus}`;
-            simCard.querySelector('.status-message').textContent = simStatus === 'healthy' ? 'Ready' : 'Connection error';
-            simCard.querySelector('.details').innerHTML = formatSIMInfo(components.sim?.info);
+            simCard.querySelector('.status-message').textContent = simStatus === 'healthy' ? 'Ready' : 'Not Ready';
+            if (components.sim?.info) {
+                simCard.querySelector('.details').innerHTML = formatSIMInfo(components.sim.info);
+            }
             
             // Update Network
             const networkCard = document.getElementById('network-health');
             const networkStatus = components.network?.status || 'unhealthy';
             networkCard.className = `health-card ${networkStatus}`;
-            networkCard.querySelector('.status-message').textContent = networkStatus === 'healthy' ? 'Connected' : 'Connection error';
-            networkCard.querySelector('.details').innerHTML = formatNetworkInfo(components.network?.info);
+            networkCard.querySelector('.status-message').textContent = networkStatus === 'healthy' ? 'Connected' : 'Not Connected';
+            if (components.network?.info) {
+                networkCard.querySelector('.details').innerHTML = formatNetworkInfo(components.network.info);
+            }
         })
         .catch(error => {
             console.error('Health check failed:', error);
             document.querySelectorAll('.health-card').forEach(card => {
                 card.className = 'health-card unhealthy';
-                card.querySelector('.status-message').textContent = 'Connection error';
+                card.querySelector('.status-message').textContent = 'Not Connected';
                 const details = card.querySelector('.details');
-                if (details) details.textContent = '';
+                if (details) details.innerHTML = '';
             });
         });
 }

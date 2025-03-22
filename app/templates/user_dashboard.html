@@ -2,138 +2,217 @@
 
 {% block content %}
 <div class="user-dashboard">
-    <div class="button-grid">
-        <a href="{{ url_for('auth.logout') }}" class="dashboard-button">
-            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
-            <span>Log Out</span>
-        </a>
-    </div>
-
-    <div class="dashboard-section">
-        <h2>Send SMS</h2>
-        <form method="POST" class="pure-form pure-form-stacked">
-            <fieldset>
-                <div class="pure-control-group">
-                    <label for="template">Select Template</label>
-                    <select id="template" name="template" required>
-                        <option value="">Choose a template...</option>
-                        {% for template in templates %}
-                        <option value="{{ template.id }}">{{ template.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="pure-control-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" pattern="[0-9]{11}" required>
-                    <span class="help-text">Enter 11-digit UK phone number</span>
-                </div>
-                <div class="pure-control-group">
-                    <label for="message">Message</label>
-                    <textarea id="message" name="message" rows="4" required></textarea>
-                </div>
-                <div class="pure-controls">
-                    <button type="submit" class="pure-button pure-button-primary">
-                        <img src="{{ url_for('static', filename='icons/send.svg') }}" alt="Send">
-                        <span>Send SMS</span>
-                    </button>
-                </div>
-            </fieldset>
-        </form>
-    </div>
-
-    <div class="dashboard-section">
-        <h2>Recent Messages</h2>
-        <div class="messages-table">
-            <table class="pure-table pure-table-bordered">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Phone</th>
-                        <th>Status</th>
-                        <th>Status Time</th>
-                        <th>Message</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for message in recent_messages %}
-                    <tr>
-                        <td>{{ message.created_at }}</td>
-                        <td>{{ message.phone_number }}</td>
-                        <td>
-                            <span class="status-badge status-{{ message.status.lower() }}">
-                                {{ message.status|title }}
-                            </span>
-                            {% if message.error_message %}
-                            <div class="error-message">{{ message.error_message }}</div>
-                            {% endif %}
-                        </td>
-                        <td>{{ message.status_time }}</td>
-                        <td>{{ message.content }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <h2>Send SMS Message</h2>
+    <form method="POST" action="{{ url_for('user.send_sms') }}" class="sms-form">
+        <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input type="tel" id="phone_number" name="phone_number" pattern="07[0-9]{9}" placeholder="07XXXXXXXXX" required>
+            <small>Must start with 07 and be 11 digits long</small>
         </div>
 
-        {% if recent_messages %}
-        <div class="messages-pagination">
-            <div class="pure-button-group" role="group">
-                {% if page > 1 %}
-                <a href="{{ url_for('user.dashboard', page=page-1) }}" class="pure-button">
-                    <img src="{{ url_for('static', filename='icons/arrow-left.svg') }}" alt="Previous">
-                    <span>Previous</span>
-                </a>
-                {% endif %}
-                <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
-                {% if page < total_pages %}
-                <a href="{{ url_for('user.dashboard', page=page+1) }}" class="pure-button">
-                    <img src="{{ url_for('static', filename='icons/arrow-right.svg') }}" alt="Next">
-                    <span>Next</span>
-                </a>
-                {% endif %}
-            </div>
+        <div class="form-group">
+            <label for="template">Template (Optional)</label>
+            <select id="template" onchange="loadTemplate(this.value)">
+                <option value="">Select a template...</option>
+                {% for template in templates %}
+                <option value="{{ template.title }}">{{ template.title }}</option>
+                {% endfor %}
+            </select>
         </div>
-        {% endif %}
-    </div>
+
+        <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="4" required></textarea>
+            <div class="char-counter"><span class="current-chars">0</span>/160</div>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" class="send-button">
+                <img src="{{ url_for('static', filename='icons/sms_send.svg') }}" alt="Send">
+                <span>Send Message</span>
+            </button>
+            <a href="{{ url_for('auth.logout') }}" class="logout-button">
+                <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+                <span>Log Out</span>
+            </a>
+        </div>
+    </form>
 </div>
 
 <style>
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    font-weight: bold;
+.user-dashboard {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.status-queued {
-    background-color: #f0f0f0;
+.user-dashboard h2 {
+    margin: 0 0 2rem;
+    text-align: center;
+    color: #333;
+}
+
+.sms-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group small {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.9rem;
     color: #666;
 }
 
-.status-sending {
-    background-color: #fff3cd;
-    color: #856404;
+.button-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
-.status-sent {
-    background-color: #cce5ff;
-    color: #004085;
+.send-button,
+.logout-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
 }
 
-.status-delivered {
-    background-color: #d4edda;
-    color: #155724;
+.send-button {
+    background: #28a745;
+    color: white;
 }
 
-.status-failed {
-    background-color: #f8d7da;
-    color: #721c24;
+.send-button:hover {
+    background: #218838;
 }
 
-.error-message {
-    font-size: 0.8em;
-    color: #721c24;
-    margin-top: 4px;
+.logout-button {
+    background: #dc3545;
+    color: white;
+}
+
+.logout-button:hover {
+    background: #c82333;
+}
+
+.send-button img,
+.logout-button img {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 768px) {
+    .user-dashboard {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .button-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dark mode styles */
+body.dark-mode .user-dashboard {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .user-dashboard h2 {
+    color: #f8f9fa;
+}
+
+body.dark-mode .form-group label {
+    color: #f8f9fa;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #f8f9fa;
+}
+
+body.dark-mode .form-group small {
+    color: #aaa;
+}
+
+body.dark-mode .char-counter {
+    color: #aaa;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageTextarea = document.getElementById('message');
+    const charCounter = document.querySelector('.char-counter .current-chars');
+    
+    messageTextarea.addEventListener('input', function() {
+        charCounter.textContent = this.value.length;
+    });
+});
+
+function loadTemplate(title) {
+    if (!title) {
+        document.getElementById('message').value = '';
+        document.querySelector('.char-counter .current-chars').textContent = '0';
+        return;
+    }
+    
+    fetch(`/get-template/${title}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.content) {
+                const messageTextarea = document.getElementById('message');
+                messageTextarea.value = data.content;
+                document.querySelector('.char-counter .current-chars').textContent = data.content.length;
+            }
+        })
+        .catch(error => console.error('Error loading template:', error));
+}
+</script>
 {% endblock %} 
