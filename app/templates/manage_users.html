@@ -2,6 +2,7 @@
 
 {% block content %}
 <div class="manage-users">
+    <h1>Manage Users</h1>
     <div class="nav-grid">
         <a href="{{ url_for('admin.add_user') }}" class="nav-button">
             <img src="{{ url_for('static', filename='icons/user_register.svg') }}" alt="Add User">
@@ -23,11 +24,24 @@
 </div>
 
 <style>
+.manage-users {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.manage-users h1 {
+    text-align: center;
+    margin-bottom: 3rem;
+    color: inherit;
+    font-size: 2rem;
+}
+
 .nav-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 3rem;
-    margin: 3rem auto;
+    margin: 2rem auto;
     max-width: 1200px;
     padding: 0 2rem;
 }
@@ -46,7 +60,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
+    padding: 2rem;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -54,7 +68,7 @@
     color: #333;
     transition: all 0.3s ease;
     height: 100%;
-    min-height: 200px;
+    min-height: 160px;
 }
 
 .nav-button:hover {
@@ -63,9 +77,9 @@
 }
 
 .nav-button img {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 1.5rem;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
 }
 
 .nav-button span {
@@ -77,6 +91,10 @@
 /* Dark mode styles */
 body.dark-mode .nav-button {
     background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .manage-users h1 {
     color: #f8f9fa;
 }
 </style>

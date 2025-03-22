@@ -240,35 +240,40 @@ def delete_user():
 @admin_bp.route('/admin/change_password', methods=['GET', 'POST'])
 @admin_required
 def change_password():
-    if request.method == 'POST':
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if not current_password or not new_password or not confirm_password:
-            flash('All fields are required', 'error')
-            return render_template('change_password.html')
-        
-        if new_password != confirm_password:
-            flash('New passwords do not match', 'error')
-            return render_template('change_password.html')
-        
-        if len(new_password) < 2:
-            flash('Password must be at least 2 characters long', 'error')
-            return render_template('change_password.html')
-        
-        user = User.get_by_id(session['user_id'])
-        if not user or not User.authenticate(user['username'], current_password):
-            flash('Current password is incorrect', 'error')
-            return render_template('change_password.html')
-        
-        if User.update_password(user['username'], new_password):
-            flash('Password changed successfully', 'success')
-            session.pop('password_warning', None)  # Remove password warning after change
-            return redirect(url_for('admin.dashboard'))
-        else:
-            flash('Failed to change password', 'error')
-            return render_template('change_password.html')
+    try:
+        if request.method == 'POST':
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if not current_password or not new_password or not confirm_password:
+                flash('All fields are required', 'error')
+                return render_template('change_password.html')
+            
+            if new_password != confirm_password:
+                flash('New passwords do not match', 'error')
+                return render_template('change_password.html')
+            
+            if len(new_password) < 2:
+                flash('Password must be at least 2 characters long', 'error')
+                return render_template('change_password.html')
+            
+            user = User.get_by_id(session['user_id'])
+            if not user or not User.authenticate(user['username'], current_password):
+                flash('Current password is incorrect', 'error')
+                return render_template('change_password.html')
+            
+            if User.update_password(user['username'], new_password):
+                flash('Password changed successfully', 'success')
+                session.pop('password_warning', None)  # Remove password warning after change
+                return redirect(url_for('admin.dashboard'))
+            else:
+                flash('Failed to change password', 'error')
+                return render_template('change_password.html')
+    except Exception as e:
+        logger.error(f"Error in change_password: {str(e)}")
+        flash('An error occurred while changing the password', 'error')
+        return render_template('change_password.html')
     
     return render_template('change_password.html')
 
