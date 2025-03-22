@@ -22,4 +22,12 @@ class Config:
     # Application settings
     MAX_SMS_LENGTH = 160
     DEFAULT_TEMPLATE = 'Default'
+    TIMEZONE = 'Europe/London'
+    
+    # Admin settings
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')  # Default to 'admin' if not set
+    
+    # Application settings
+    MAX_SMS_LENGTH = 160
+    DEFAULT_TEMPLATE = 'Default'
     TIMEZONE = 'Europe/London' 

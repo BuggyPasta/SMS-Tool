@@ -1,13 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if session.get('password_warning') %}
-<div class="password-warning">
-    ⚠️ Warning: You are using the default admin password. Please change it immediately for security reasons.
-    <a href="{{ url_for('admin.change_password') }}" class="warning-link">Change Password</a>
-</div>
-{% endif %}
-
 <div class="admin-dashboard">
     <div class="dashboard-header">
         <h1>Admin Dashboard</h1>
@@ -83,23 +76,6 @@
 </div>
 
 <style>
-.password-warning {
-    background-color: #fff3cd;
-    color: #856404;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ffeeba;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
-}
-
-.warning-link {
-    color: #856404;
-    text-decoration: underline;
-    margin-left: 1rem;
-}
-
 .admin-dashboard {
     max-width: 1200px;
     margin: 0 auto;

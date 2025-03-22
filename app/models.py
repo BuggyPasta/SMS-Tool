@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 class User:
     @staticmethod
     def get_by_username(username):
+        if username == 'admin':
+            return {'id': 1, 'username': 'admin', 'is_admin': True}
         db = get_db()
         user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         db.close()
@@ -22,6 +24,8 @@ class User:
 
     @staticmethod
     def get_by_id(user_id):
+        if user_id == 1:  # Admin user
+            return {'id': 1, 'username': 'admin', 'is_admin': True}
         db = get_db()
         user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
         db.close()
@@ -30,6 +34,9 @@ class User:
     @staticmethod
     def authenticate(username, password):
         """Authenticate a user with username and password"""
+        if username == 'admin':
+            return {'id': 1, 'username': 'admin', 'is_admin': True} if password == Config.ADMIN_PASSWORD else None
+        
         user = User.get_by_username(username)
         if user and user['password'] == password:  # In production, use proper password hashing
             return user
@@ -37,6 +44,8 @@ class User:
 
     @staticmethod
     def create(username, password, is_admin=False):
+        if username == 'admin':  # Prevent creating another admin user
+            return False
         db = get_db()
         try:
             db.execute('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
@@ -64,6 +73,8 @@ class User:
 
     @staticmethod
     def update_password(username, new_password):
+        if username == 'admin':  # Prevent changing admin password through the app
+            return False
         db = get_db()
         try:
             db.execute('UPDATE users SET password = ? WHERE username = ?',
@@ -77,9 +88,9 @@ class User:
 
     @staticmethod
     def get_all():
-        """Get all users"""
+        """Get all users except admin"""
         db = get_db()
-        users = db.execute('SELECT * FROM users ORDER BY username').fetchall()
+        users = db.execute('SELECT * FROM users WHERE username != "admin" ORDER BY username').fetchall()
         db.close()
         return users
 

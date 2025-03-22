@@ -21,6 +21,7 @@ services:
       - FLASK_APP=app
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - TZ=Europe/London
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO

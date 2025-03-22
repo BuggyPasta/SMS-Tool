@@ -162,9 +162,6 @@ def login():
         if user:
             session['user_id'] = user['id']
             session['is_admin'] = user['is_admin']
-            if user['is_admin'] and user['password'] == 'admin':
-                session['password_warning'] = True
-                flash('Please change your default admin password!', 'warning')
             return redirect(url_for('admin.dashboard' if user['is_admin'] else 'user.dashboard'))
         flash('Invalid username or password', 'error')
     return render_template('login.html')
@@ -252,7 +249,6 @@ def change_password():
             
             if User.update_password(user['username'], new_password):
                 flash('Password changed successfully', 'success')
-                session.pop('password_warning', None)  # Remove password warning after change
                 return redirect(url_for('admin.dashboard'))
             else:
                 flash('Failed to change password', 'error')

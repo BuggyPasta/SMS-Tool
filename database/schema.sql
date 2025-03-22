@@ -35,10 +35,6 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (sender_id) REFERENCES users(id)
 );
 
--- Insert default admin user (password: admin)
-INSERT OR IGNORE INTO users (username, password, is_admin) 
-VALUES ('admin', 'admin', 1);
-
 -- Insert default template
 INSERT OR IGNORE INTO templates (title, content) 
 VALUES ('Default', 'Hi, this is XXXXXXX from COMPANY. Please do not reply to this message as it won''t reach us. If you wish to contact us, please call 0123456789'); 
