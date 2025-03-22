@@ -11,6 +11,7 @@ import atexit
 import signal
 import sys
 import threading
+import os
 
 # Setup logging
 loggers = setup_logging()
@@ -53,14 +54,26 @@ def create_app():
     signal.signal(signal.SIGINT, signal_handler)
     logger.info("Registered signal handlers")
 
+    # Ensure instance and log directories exist
+    try:
+        os.makedirs(os.path.dirname(Config.DATABASE), exist_ok=True)
+        os.makedirs('logs', exist_ok=True)
+        logger.info("Ensured required directories exist")
+    except Exception as e:
+        logger.error(f"Failed to create required directories: {str(e)}")
+        raise
+
     try:
         # Initialize database
         logger.info("Initializing database")
-        init_db()
+        if not init_db():
+            logger.error("Database initialization failed")
+            raise Exception("Failed to initialize database")
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
-        raise
+        # Continue despite error, but log it
+        logger.warning("Continuing despite database initialization error")
 
     try:
         # Initialize Gammu service (but don't connect yet)
@@ -73,31 +86,43 @@ def create_app():
         logger.info("Registered cleanup functions")
     except Exception as e:
         logger.error(f"Failed to create Gammu service: {str(e)}")
-        raise
+        # Continue despite error, but log it
+        logger.warning("Continuing despite Gammu service initialization error")
 
     # Register blueprints
-    logger.info("Registering blueprints")
-    from .routes import auth_bp, admin_bp, user_bp, register_health_check
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(user_bp)
-    logger.info("Blueprints registered")
-    
-    # Register health check endpoint
-    logger.info("Registering health check endpoint")
-    register_health_check(app)
-    logger.info("Health check endpoint registered")
+    try:
+        logger.info("Registering blueprints")
+        from .routes import auth_bp, admin_bp, user_bp, register_health_check
+        app.register_blueprint(auth_bp)
+        app.register_blueprint(admin_bp)
+        app.register_blueprint(user_bp)
+        logger.info("Blueprints registered")
+        
+        # Register health check endpoint
+        logger.info("Registering health check endpoint")
+        register_health_check(app)
+        logger.info("Health check endpoint registered")
+    except Exception as e:
+        logger.error(f"Failed to register blueprints: {str(e)}")
+        raise
 
     @app.before_request
     def before_request():
         """Set up request context"""
         g.shutdown_event = shutdown_event
+        g.gammu_service = gammu_service
 
     @app.teardown_appcontext
     def teardown_appcontext(exception=None):
         """Clean up request context"""
         if exception:
-            logger.error(f"Error during request: {str(exception)}")
+            logger.error(f"Error during request: {str(exception)}", exc_info=True)
+        # Close any open database connections
+        if hasattr(g, 'db'):
+            try:
+                g.db.close()
+            except Exception as e:
+                logger.error(f"Error closing database connection: {str(e)}")
 
     @app.errorhandler(Exception)
     def handle_error(error):
@@ -105,7 +130,7 @@ def create_app():
         logger.error(f"Unhandled error: {str(error)}", exc_info=True)
         return jsonify({
             'error': 'Internal Server Error',
-            'message': str(error)
+            'message': str(error) if app.debug else 'An unexpected error occurred'
         }), 500
 
     logger.info("App creation completed")

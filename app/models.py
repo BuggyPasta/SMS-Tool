@@ -29,32 +29,58 @@ def get_db():
     return db
 
 def init_db():
-    """Initialize database with schema"""
-    db = get_db()
+    """Initialize the database"""
+    db = None
     try:
+        # Get absolute path to schema file
+        schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
+        if not os.path.exists(schema_path):
+            logger.error(f"Schema file not found at {schema_path}")
+            return False
+
+        logger.info(f"Initializing database with schema from {schema_path}")
+        
         # Ensure database directory exists
         db_dir = os.path.dirname(Config.DATABASE)
         os.makedirs(db_dir, exist_ok=True)
         
-        # Get schema path
-        schema_path = os.path.join('/app', 'database', 'schema.sql')
-        if not os.path.exists(schema_path):
-            logger.error(f"Schema file not found at {schema_path}")
-            raise FileNotFoundError(f"Schema file not found at {schema_path}")
+        # Get database connection
+        db = get_db()
         
-        logger.info(f"Initializing database at {Config.DATABASE} with schema from {schema_path}")
-        
-        # Initialize database
+        # Read and execute schema
         with open(schema_path, 'r') as f:
             db.executescript(f.read())
         db.commit()
         
-        logger.info("Database initialized successfully")
+        # Verify database was initialized correctly
+        try:
+            # Check if users table exists and has admin user
+            admin = db.execute('SELECT * FROM users WHERE username = ?', ('admin',)).fetchone()
+            if not admin:
+                logger.error("Database initialization failed: admin user not created")
+                return False
+                
+            # Check if templates table exists and has default template
+            default_template = db.execute('SELECT * FROM templates WHERE title = ?', ('Default',)).fetchone()
+            if not default_template:
+                logger.error("Database initialization failed: default template not created")
+                return False
+                
+            logger.info("Database initialization verified successfully")
+            return True
+        except sqlite3.Error as e:
+            logger.error(f"Database verification failed: {str(e)}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Error initializing database: {e}")
-        raise
+        logger.error(f"Error initializing database: {str(e)}")
+        return False
     finally:
-        db.close()
+        if db:
+            try:
+                db.close()
+            except Exception as e:
+                logger.error(f"Error closing database connection: {str(e)}")
 
 class User:
     @staticmethod
@@ -143,7 +169,7 @@ class Template:
                     AND id NOT IN (
                         SELECT id FROM templates 
                         WHERE title = "Default" 
-                        ORDER BY updated_at DESC 
+                        ORDER BY COALESCE(updated_at, created_at) DESC 
                         LIMIT 1
                     )
                 ''')
@@ -155,7 +181,11 @@ class Template:
             logger.error(f"Error getting templates: {str(e)}")
             return []
         finally:
-            db.close()
+            if db:
+                try:
+                    db.close()
+                except Exception as e:
+                    logger.error(f"Error closing database connection: {str(e)}")
 
     @staticmethod
     def get_by_title(title):
@@ -174,8 +204,11 @@ class Template:
             if existing > 0:
                 return False
             
-            db.execute('INSERT INTO templates (title, content) VALUES (?, ?)',
-                      (title, content))
+            now = datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+            db.execute('''
+                INSERT INTO templates (title, content, created_at, updated_at) 
+                VALUES (?, ?, ?, ?)
+            ''', (title, content, now, now))
             db.commit()
             return True
         except sqlite3.IntegrityError:
@@ -184,23 +217,38 @@ class Template:
             logger.error(f"Error creating template: {str(e)}")
             return False
         finally:
-            db.close()
+            if db:
+                try:
+                    db.close()
+                except Exception as e:
+                    logger.error(f"Error closing database connection: {str(e)}")
 
     @staticmethod
     def update(title, content):
         db = get_db()
         try:
-            db.execute('UPDATE templates SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE title = ?',
-                      (content, title))
+            now = datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+            db.execute('''
+                UPDATE templates 
+                SET content = ?, updated_at = ? 
+                WHERE title = ?
+            ''', (content, now, title))
             db.commit()
             return True
-        except sqlite3.Error:
+        except sqlite3.Error as e:
+            logger.error(f"Error updating template: {str(e)}")
             return False
         finally:
-            db.close()
+            if db:
+                try:
+                    db.close()
+                except Exception as e:
+                    logger.error(f"Error closing database connection: {str(e)}")
 
     @staticmethod
     def delete(title):
+        if title == 'Default':
+            return False
         db = get_db()
         try:
             db.execute('DELETE FROM templates WHERE title = ?', (title,))
