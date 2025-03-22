@@ -33,7 +33,7 @@ def init_db():
     """Initialize the database"""
     try:
         # Get absolute path to schema file
-        schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
+        schema_path = os.path.join(current_app.root_path, '..', 'database', 'schema.sql')
         if not os.path.exists(schema_path):
             logger.error(f"Schema file not found at {schema_path}")
             return False
@@ -46,8 +46,8 @@ def init_db():
         db = get_db()
         
         # Read and execute schema
-        with current_app.open_resource('database/schema.sql') as f:
-            db.executescript(f.read().decode('utf8'))
+        with open(schema_path, 'r') as f:
+            db.executescript(f.read())
         db.commit()
         
         # Verify database was initialized correctly

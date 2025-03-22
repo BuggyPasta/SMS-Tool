@@ -5,7 +5,7 @@ Application routes
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from functools import wraps
 from .models import User, Template, Message
-from .database import get_db, is_connected
+from .database import get_db
 from .services.gammu_service import GammuService
 from .exceptions import GammuError, ModemError, SIMError, NetworkError, ErrorCode
 import re
