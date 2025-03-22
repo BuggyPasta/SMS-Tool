@@ -68,114 +68,89 @@ class GammuService:
     """Thread-safe singleton service for Gammu SMS functionality"""
     _instance = None
     _lock = threading.Lock()
-    _is_connected = False
-    _connection_timeout = 30  # seconds
 
     def __new__(cls):
-        if cls._instance is None:
-            with cls._lock:
-                # Double-checked locking pattern
-                if cls._instance is None:
-                    cls._instance = super(GammuService, cls).__new__(cls)
-                    cls._instance.state_machine = None
-                    cls._instance._state = ConnectionState()
-        return cls._instance
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super(GammuService, cls).__new__(cls)
+                cls._instance._initialized = False
+            return cls._instance
 
     def __init__(self):
         """Initialize Gammu service"""
-        logger.info("Initializing GammuService")
-        self.state_machine = None
-        self.connected = False
-        try:
-            logger.debug("Creating Gammu state machine")
-            self.state_machine = gammu.StateMachine()
-            logger.debug("Reading Gammu config")
-            self.state_machine.ReadConfig(Filename='/etc/gammurc')
-            logger.info("Successfully initialized GammuService")
-        except gammu.ERR_NONE:
-            logger.warning("Gammu initialization warning, but continuing")
-            pass
-        except Exception as e:
-            logger.error(f"Failed to initialize GammuService: {e}")
-            raise GammuError(f"Failed to initialize Gammu: {str(e)}", ErrorCode.GAMMU_INIT_FAILED)
+        with self._lock:
+            if self._initialized:
+                return
+                
+            logger.info("Initializing GammuService")
+            self.state_machine = None
+            self.connected = False
+            
+            try:
+                logger.debug("Creating Gammu state machine")
+                self.state_machine = gammu.StateMachine()
+                logger.debug("Reading Gammu config")
+                self.state_machine.ReadConfig(Filename='/etc/gammurc')
+                logger.info("Successfully initialized GammuService")
+            except gammu.ERR_NONE:
+                logger.warning("Gammu initialization warning, but continuing")
+            except Exception as e:
+                logger.error(f"Failed to initialize GammuService: {e}")
+                raise GammuError(f"Failed to initialize Gammu: {str(e)}", ErrorCode.GAMMU_INIT_FAILED)
+            
+            self._initialized = True
 
     def __del__(self):
         """Ensure cleanup when instance is destroyed"""
-        try:
-            self.close()
-        except Exception as e:
-            logger.error(f"Error during cleanup in __del__: {e}")
+        self.disconnect()
 
-    def _get_cached_state(self, key: str, fetch_func, error_code: ErrorCode) -> Any:
-        """Get state from cache or fetch and cache it"""
-        try:
-            value = self._state.get(key)
-            if value is not None:
-                return value
-                
-            with self._lock:
-                if not self._is_connected:
-                    raise ModemError("Modem is not connected", error_code)
-                    
-                try:
-                    value = fetch_func()
-                    self._state.update(**{key: value})
-                    return value
-                except gammu.GSMError as e:
-                    self._state.invalidate()
-                    raise ModemError(f"Failed to fetch {key}: {str(e)}", error_code) from e
-                    
-        except Exception as e:
-            if not isinstance(e, ModemError):
-                self._state.invalidate()
-                raise ModemError(f"Unexpected error fetching {key}: {str(e)}", error_code) from e
-            raise
-
-    def is_connected(self) -> bool:
-        """Check if the service is connected to the modem"""
-        with self._lock:
-            return self._is_connected and self.state_machine is not None
-
-    def connect(self):
+    def connect(self) -> bool:
         """Connect to the modem"""
-        if self.connected:
-            logger.debug("Already connected")
-            return True
+        with self._lock:
+            if self.connected:
+                logger.debug("Already connected")
+                return True
 
-        logger.info("Connecting to modem")
-        try:
-            logger.debug("Attempting to initialize state machine")
-            self.state_machine.Init()
-            self.connected = True
-            logger.info("Successfully connected to modem")
-            return True
-        except gammu.ERR_DEVICENOTEXIST:
-            logger.error("Modem device not found")
-            raise ModemError("Modem device not found", ErrorCode.MODEM_NOT_FOUND)
-        except gammu.ERR_DEVICEBUSY:
-            logger.error("Modem device is busy")
-            raise ModemError("Modem device is busy", ErrorCode.MODEM_BUSY)
-        except gammu.ERR_DEVICEOPENERROR:
-            logger.error("Failed to open modem device")
-            raise ModemError("Failed to open modem device", ErrorCode.MODEM_OPEN_ERROR)
-        except Exception as e:
-            logger.error(f"Failed to connect to modem: {e}")
-            raise ModemError(f"Failed to connect to modem: {str(e)}", ErrorCode.MODEM_CONNECT_ERROR)
+            logger.info("Connecting to modem")
+            try:
+                logger.debug("Attempting to initialize state machine")
+                self.state_machine.Init()
+                self.connected = True
+                logger.info("Successfully connected to modem")
+                return True
+            except gammu.ERR_DEVICENOTEXIST:
+                logger.error("Modem device not found")
+                raise ModemError("Modem device not found", ErrorCode.MODEM_NOT_FOUND)
+            except gammu.ERR_DEVICEBUSY:
+                logger.error("Modem device is busy")
+                raise ModemError("Modem device is busy", ErrorCode.MODEM_BUSY)
+            except gammu.ERR_DEVICEOPENERROR:
+                logger.error("Failed to open modem device")
+                raise ModemError("Failed to open modem device", ErrorCode.MODEM_OPEN_ERROR)
+            except Exception as e:
+                logger.error(f"Failed to connect to modem: {e}")
+                raise ModemError(f"Failed to connect to modem: {str(e)}", ErrorCode.MODEM_CONNECT_ERROR)
 
     def disconnect(self):
         """Disconnect from the modem"""
-        if not self.connected:
-            logger.debug("Already disconnected")
-            return
+        with self._lock:
+            if not self.connected:
+                logger.debug("Already disconnected")
+                return
 
-        logger.info("Disconnecting from modem")
-        try:
-            self.state_machine.Terminate()
-            self.connected = False
-            logger.info("Successfully disconnected from modem")
-        except Exception as e:
-            logger.error(f"Error during disconnect: {e}")
-            # Don't raise here as we're likely cleaning up
+            logger.info("Disconnecting from modem")
+            try:
+                self.state_machine.Terminate()
+                self.connected = False
+                logger.info("Successfully disconnected from modem")
+            except Exception as e:
+                logger.error(f"Error during disconnect: {e}")
+                # Don't raise here as we're likely cleaning up
+
+    def is_connected(self) -> bool:
+        """Check if connected to modem"""
+        with self._lock:
+            return self.connected and self.state_machine is not None
 
     def get_modem_status(self):
         """Get modem status information"""
@@ -216,43 +191,41 @@ class GammuService:
             logger.error(f"Failed to get network status: {e}")
             raise NetworkError(f"Failed to get network status: {str(e)}", ErrorCode.NETWORK_STATUS_ERROR)
 
-    def send_sms(self, phone_number: str, message: str, message_id: int) -> bool:
+    def send_sms(self, phone_number: str, message: str, message_id: Optional[int] = None) -> bool:
         """Send SMS message"""
-        with self._lock:
-            if not self.is_connected():
-                error_msg = "Cannot send SMS: not connected to modem"
-                logger.error(error_msg)
-                Message.update_status(message_id, 'failed', error_msg)
-                return False
+        logger.info(f"Sending SMS to {phone_number}")
+        try:
+            if not self.connected:
+                self.connect()
 
-            try:
-                # Format phone number (remove any non-digit characters)
-                phone_number = ''.join(filter(str.isdigit, phone_number))
-                
-                # Create message structure
-                message_data = {
-                    'Text': message,
-                    'SMSC': {'Location': 1},
-                    'Number': phone_number,
-                }
+            # Prepare message data
+            message_data = {
+                'Text': message,
+                'SMSC': {'Location': 1},
+                'Number': phone_number
+            }
 
-                # Send message
-                self.state_machine.SendSMS(message_data)
-                logger.info(f"Message {message_id} sent successfully to {phone_number}")
-                
-                # Update message status
-                Message.update_status(message_id, 'sent')
-                return True
+            # Send message
+            logger.debug("Sending message")
+            self.state_machine.SendSMS(message_data)
+            logger.info(f"Successfully sent SMS to {phone_number}")
+            return True
 
-            except Exception as e:
-                error_msg = f"Failed to send message {message_id}: {str(e)}"
-                logger.error(error_msg, extra={
-                    'phone_number': phone_number,
-                    'message_id': message_id,
-                    'error': str(e)
-                })
-                Message.update_status(message_id, 'failed', str(e))
-                return False
+        except gammu.ERR_EMPTY:
+            logger.error("Empty message")
+            raise ValueError("Message cannot be empty")
+        except gammu.ERR_INVALIDLOCATION:
+            logger.error("Invalid number")
+            raise ValueError("Invalid phone number")
+        except gammu.ERR_NETWORK_ERROR:
+            logger.error("Network error")
+            raise NetworkError("Failed to send SMS: Network error", ErrorCode.NETWORK_ERROR)
+        except gammu.ERR_TIMEOUT:
+            logger.error("Operation timed out")
+            raise NetworkError("Failed to send SMS: Timeout", ErrorCode.NETWORK_TIMEOUT)
+        except Exception as e:
+            logger.error(f"Failed to send SMS: {e}")
+            raise GammuError(f"Failed to send SMS: {str(e)}", ErrorCode.SMS_SEND_ERROR)
 
     def check_modem_status(self) -> bool:
         """Check modem status and network registration"""

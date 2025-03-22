@@ -39,7 +39,6 @@ def cleanup_gammu():
             gammu_service.disconnect()
         except Exception as e:
             logger.error(f"Error during Gammu cleanup: {e}")
-        gammu_service = None
 
 def create_app():
     """Create and configure the Flask application"""
@@ -67,7 +66,6 @@ def create_app():
         logger.info("Creating Gammu service instance")
         global gammu_service
         gammu_service = GammuService()
-        logger.info("Gammu service instance created")
         
         # Register cleanup functions
         atexit.register(cleanup_gammu)
