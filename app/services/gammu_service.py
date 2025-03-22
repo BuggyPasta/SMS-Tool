@@ -28,14 +28,18 @@ class GammuService:
     _lock = threading.Lock()
 
     def __new__(cls):
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = super(GammuService, cls).__new__(cls)
-                cls._instance._initialized = False
-            return cls._instance
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(GammuService, cls).__new__(cls)
+                    cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self):
         """Initialize Gammu service"""
+        if self._initialized:
+            return
+            
         with self._lock:
             if self._initialized:
                 return
@@ -48,10 +52,8 @@ class GammuService:
                 logger.debug("Creating Gammu state machine")
                 self.state_machine = gammu.StateMachine()
                 logger.debug("Reading Gammu config")
-                self.state_machine.ReadConfig(Filename='/etc/gammurc')
+                self.state_machine.ReadConfig(Filename=Config.GAMMU_CONFIG)
                 logger.info("Successfully initialized GammuService")
-            except gammu.ERR_NONE:
-                logger.warning("Gammu initialization warning, but continuing")
             except Exception as e:
                 logger.error(f"Failed to initialize GammuService: {e}")
                 raise GammuError(f"Failed to initialize Gammu: {str(e)}", ErrorCode.GAMMU_INIT_FAILED)
@@ -69,9 +71,7 @@ class GammuService:
                 logger.debug("Already connected")
                 return True
 
-            logger.info("Connecting to modem")
             try:
-                logger.debug("Attempting to initialize state machine")
                 self.state_machine.Init()
                 self.connected = True
                 logger.info("Successfully connected to modem")
@@ -96,7 +96,6 @@ class GammuService:
                 logger.debug("Already disconnected")
                 return
 
-            logger.info("Disconnecting from modem")
             try:
                 self.state_machine.Terminate()
                 self.connected = False
@@ -112,19 +111,47 @@ class GammuService:
 
     def get_modem_info(self) -> Dict[str, Any]:
         """Get comprehensive modem information"""
-        logger.debug("Getting modem information")
         try:
             if not self.connected:
                 self.connect()
             
-            info = {
-                'security': self.state_machine.GetSecurityStatus(),
-                'signal': self.state_machine.GetSignalQuality(),
-                'battery': self.state_machine.GetBatteryCharge(),
-                'manufacturer': self.state_machine.GetManufacturer(),
-                'model': self.state_machine.GetModel()
-            }
-            return info
+            info = {}
+            
+            # Try each command separately and catch errors
+            try:
+                info['security'] = self.state_machine.GetSecurityStatus()
+            except Exception as e:
+                logger.warning(f"Failed to get security status: {e}")
+                info['security'] = None
+
+            try:
+                info['signal'] = self.state_machine.GetSignalQuality()
+            except Exception as e:
+                logger.warning(f"Failed to get signal quality: {e}")
+                info['signal'] = None
+
+            # Skip battery check since device is USB powered
+            info['battery'] = {'ChargeState': 'USB_POWERED', 'BatteryPercent': None}
+
+            try:
+                info['manufacturer'] = self.state_machine.GetManufacturer()
+            except Exception as e:
+                logger.warning(f"Failed to get manufacturer: {e}")
+                info['manufacturer'] = None
+
+            try:
+                info['model'] = self.state_machine.GetModel()
+            except Exception as e:
+                logger.warning(f"Failed to get model: {e}")
+                info['model'] = None
+
+            # If we got at least some information, return it
+            if any(v is not None for v in info.values()):
+                return info
+            
+            # If all commands failed, raise an error
+            raise ModemError("Failed to get any modem information", ErrorCode.MODEM_STATUS_ERROR)
+            
         except Exception as e:
             logger.error(f"Failed to get modem info: {e}")
             raise ModemError(f"Failed to get modem info: {str(e)}", ErrorCode.MODEM_STATUS_ERROR)

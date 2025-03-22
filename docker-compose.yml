@@ -11,9 +11,9 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - /home/ovenking/docker_backup/sms_tool/instance:/app/instance
-      - /home/ovenking/docker_backup/sms_tool/logs:/app/logs
-      - /dev/ttyUSB3:/dev/ttyUSB3
+      - /home/ovenking/docker_backup/sms_tool/instance:/app/instance:rw
+      - /home/ovenking/docker_backup/sms_tool/logs:/app/logs:rw
+      - /dev/ttyUSB3:/dev/ttyUSB3:rw
     group_add:
       - dialout
     environment:
@@ -23,10 +23,14 @@ services:
       - TZ=Europe/London
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
+      - USB_DEVICE=/dev/ttyUSB3
+      - GAMMU_CONFIG=/etc/gammurc
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=4001
     healthcheck:
-      test: ["CMD", "curl", "-v", "-f", "http://localhost:4001/health"]
+      test: ["CMD-SHELL", "curl -s -f http://localhost:4001/health || exit 1"]
       interval: 30s
-      timeout: 30s
+      timeout: 10s
       retries: 3
       start_period: 60s
     cap_add:

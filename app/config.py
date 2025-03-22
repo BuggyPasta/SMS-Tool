@@ -15,6 +15,10 @@ class Config:
     # Database configuration
     DATABASE = '/app/instance/database.db'
     
+    # Device configuration
+    USB_DEVICE = os.environ.get('USB_DEVICE', '/dev/ttyUSB3')
+    GAMMU_CONFIG = os.environ.get('GAMMU_CONFIG', '/etc/gammurc')
+    
     # Application settings
     MAX_SMS_LENGTH = 160
     DEFAULT_TEMPLATE = 'Default'
