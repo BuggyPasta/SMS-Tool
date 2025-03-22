@@ -270,6 +270,7 @@ def change_password():
     return render_template('change_password.html')
 
 @admin_bp.route('/manage-templates', methods=['GET', 'POST'])
+@admin_required
 def manage_templates():
     """Manage SMS templates"""
     if request.method == 'POST':
