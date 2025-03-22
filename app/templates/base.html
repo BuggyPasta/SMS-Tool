@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMS-Tool</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
+<body class="light-mode">
     {% if session.get('user_id') %}
     <header class="header">
         <img src="{{ url_for('static', filename='icons/app_logo.svg') }}" alt="SMS-Tool Logo" class="logo">
@@ -16,10 +15,10 @@
     {% endif %}
 
     <main class="main-content">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for message in messages %}
-                    <div class="flash-message">{{ message }}</div>
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -30,7 +29,7 @@
     {% if session.get('user_id') %}
     <footer class="footer">
         <div class="theme-toggle">
-            <img src="{{ url_for('static', filename='icons/mode_dark.svg') }}" alt="Toggle theme" id="theme-toggle">
+            <img src="{{ url_for('static', filename='icons/mode_dark.svg') }}" alt="Toggle theme" id="theme-toggle-icon">
         </div>
         <div class="footer-line"></div>
         <div class="footer-text">
@@ -40,6 +39,149 @@
     </footer>
     {% endif %}
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <style>
+    body {
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body.light-mode {
+        background-color: #f8f9fa;
+        color: #333;
+    }
+
+    body.dark-mode {
+        background-color: #1a1a1a;
+        color: #f8f9fa;
+    }
+
+    .header {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .logo {
+        width: 120px;
+        height: auto;
+        margin-bottom: 1rem;
+    }
+
+    .tagline {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 2rem;
+        width: 90%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .footer {
+        text-align: center;
+        padding: 2rem;
+        margin-top: auto;
+    }
+
+    .theme-toggle {
+        margin-bottom: 1rem;
+    }
+
+    .theme-toggle img {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .theme-toggle img:hover {
+        transform: scale(1.1);
+    }
+
+    .footer-line {
+        width: 90%;
+        height: 1px;
+        background-color: #ddd;
+        margin: 1rem auto;
+    }
+
+    .footer-text {
+        font-size: 0.8rem;
+    }
+
+    .footer-text a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .footer-text a:hover {
+        text-decoration: underline;
+    }
+
+    /* Dark mode styles */
+    .dark-mode .footer-line {
+        background-color: #444;
+    }
+
+    .dark-mode .flash-message {
+        background-color: #2d2d2d;
+        border-color: #444;
+    }
+
+    .dark-mode .flash-message.error {
+        background-color: #442424;
+        color: #ffb3b3;
+        border-color: #662424;
+    }
+
+    .dark-mode .flash-message.warning {
+        background-color: #443424;
+        color: #ffd9b3;
+        border-color: #664824;
+    }
+
+    .dark-mode .flash-message.success {
+        background-color: #244424;
+        color: #b3ffb3;
+        border-color: #246624;
+    }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const body = document.body;
+        const themeToggleIcon = document.getElementById('theme-toggle-icon');
+        
+        // Load theme from localStorage
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.classList.add(currentTheme + '-mode');
+        updateThemeIcon(currentTheme);
+        
+        // Theme toggle functionality
+        themeToggleIcon.addEventListener('click', function() {
+            const isDarkMode = body.classList.contains('dark-mode');
+            const newTheme = isDarkMode ? 'light' : 'dark';
+            
+            body.classList.remove(isDarkMode ? 'dark-mode' : 'light-mode');
+            body.classList.add(newTheme + '-mode');
+            
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            themeToggleIcon.src = "{{ url_for('static', filename='icons/') }}" + 
+                                (theme === 'dark' ? 'mode_light.svg' : 'mode_dark.svg');
+        }
+    });
+    </script>
 </body>
 </html> 

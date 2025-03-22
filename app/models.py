@@ -54,6 +54,13 @@ class User:
         return user
 
     @staticmethod
+    def get_by_id(user_id):
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        db.close()
+        return user
+
+    @staticmethod
     def authenticate(username, password):
         """Authenticate a user with username and password"""
         user = User.get_by_username(username)
@@ -76,9 +83,24 @@ class User:
 
     @staticmethod
     def delete(username):
+        if username == 'admin':  # Prevent deletion of admin user
+            return False
         db = get_db()
         try:
             db.execute('DELETE FROM users WHERE username = ?', (username,))
+            db.commit()
+            return True
+        except sqlite3.Error:
+            return False
+        finally:
+            db.close()
+
+    @staticmethod
+    def update_password(username, new_password):
+        db = get_db()
+        try:
+            db.execute('UPDATE users SET password = ? WHERE username = ?',
+                      (new_password, username))
             db.commit()
             return True
         except sqlite3.Error:

@@ -164,6 +164,7 @@ def login():
             session['user_id'] = user['id']
             session['is_admin'] = user['is_admin']
             if user['is_admin'] and user['password'] == 'admin':
+                session['password_warning'] = True
                 flash('Please change your default admin password!', 'warning')
             return redirect(url_for('admin.dashboard' if user['is_admin'] else 'user.dashboard'))
         flash('Invalid username or password', 'error')
@@ -180,27 +181,84 @@ def logout():
 def dashboard():
     return render_template('admin_dashboard.html')
 
-@admin_bp.route('/admin/users', methods=['GET', 'POST'])
+@admin_bp.route('/admin/users')
 @admin_required
 def manage_users():
+    return render_template('manage_users.html')
+
+@admin_bp.route('/admin/users/add', methods=['GET', 'POST'])
+@admin_required
+def add_user():
     if request.method == 'POST':
-        action = request.form.get('action')
         username = request.form.get('username')
         password = request.form.get('password')
         
-        if action == 'add':
-            if User.create(username, password):
-                flash('User added successfully', 'success')
-            else:
-                flash('Username already exists', 'error')
-        elif action == 'delete':
-            if User.delete(username):
-                flash('User deleted successfully', 'success')
-            else:
-                flash('Failed to delete user', 'error')
+        if len(username) < 2 or len(password) < 2:
+            flash('Username and password must be at least 2 characters long', 'error')
+            return render_template('add_user.html')
+        
+        if User.create(username, password):
+            flash('User added successfully', 'success')
+            return redirect(url_for('admin.manage_users'))
+        else:
+            flash('Username already exists', 'error')
+            return render_template('add_user.html')
+    
+    return render_template('add_user.html')
+
+@admin_bp.route('/admin/users/delete', methods=['GET', 'POST'])
+@admin_required
+def delete_user():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        if username == 'admin':
+            flash('Cannot delete admin user', 'error')
+            return redirect(url_for('admin.delete_user'))
+        
+        if User.delete(username):
+            flash('User deleted successfully', 'success')
+            return redirect(url_for('admin.manage_users'))
+        else:
+            flash('Failed to delete user', 'error')
+            return redirect(url_for('admin.delete_user'))
     
     users = User.get_all()
-    return render_template('manage_users.html', users=users)
+    return render_template('delete_user.html', users=users)
+
+@admin_bp.route('/admin/change_password', methods=['GET', 'POST'])
+@admin_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not current_password or not new_password or not confirm_password:
+            flash('All fields are required', 'error')
+            return render_template('change_password.html')
+        
+        if new_password != confirm_password:
+            flash('New passwords do not match', 'error')
+            return render_template('change_password.html')
+        
+        if len(new_password) < 2:
+            flash('Password must be at least 2 characters long', 'error')
+            return render_template('change_password.html')
+        
+        user = User.get_by_id(session['user_id'])
+        if not user or not User.authenticate(user['username'], current_password):
+            flash('Current password is incorrect', 'error')
+            return render_template('change_password.html')
+        
+        if User.update_password(user['username'], new_password):
+            flash('Password changed successfully', 'success')
+            session.pop('password_warning', None)  # Remove password warning after change
+            return redirect(url_for('admin.dashboard'))
+        else:
+            flash('Failed to change password', 'error')
+            return render_template('change_password.html')
+    
+    return render_template('change_password.html')
 
 @admin_bp.route('/admin/templates', methods=['GET', 'POST'])
 @admin_required

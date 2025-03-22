@@ -2,59 +2,72 @@
 
 {% block content %}
 <div class="manage-users">
-    <div class="button-grid">
-        <a href="{{ url_for('admin.dashboard') }}" class="dashboard-button">
+    <div class="nav-grid">
+        <a href="{{ url_for('admin.add_user') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/user_register.svg') }}" alt="Add User">
+            <span>Add User</span>
+        </a>
+        <a href="{{ url_for('admin.delete_user') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/user_delete.svg') }}" alt="Delete User">
+            <span>Delete User</span>
+        </a>
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-button">
             <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Back to Home Page">
             <span>Back to Home Page</span>
         </a>
-        <a href="{{ url_for('auth.logout') }}" class="dashboard-button">
+        <a href="{{ url_for('auth.logout') }}" class="nav-button">
             <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
             <span>Log Out</span>
         </a>
     </div>
-
-    <div class="user-forms">
-        <div class="form-section">
-            <h2>Add New User</h2>
-            <form method="POST" class="pure-form pure-form-stacked">
-                <input type="hidden" name="action" value="add">
-                <fieldset>
-                    <div class="pure-control-group">
-                        <label for="username">User Name</label>
-                        <input type="text" id="username" name="username" required>
-                    </div>
-                    <div class="pure-control-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required>
-                    </div>
-                    <div class="pure-controls">
-                        <button type="submit" class="pure-button pure-button-primary">
-                            <img src="{{ url_for('static', filename='icons/icon_ok.svg') }}" alt="Save">
-                            <span>Save</span>
-                        </button>
-                    </div>
-                </fieldset>
-            </form>
-        </div>
-
-        <div class="form-section">
-            <h2>Delete User</h2>
-            <form method="POST" class="pure-form pure-form-stacked">
-                <input type="hidden" name="action" value="delete">
-                <fieldset>
-                    <div class="pure-control-group">
-                        <label for="delete-username">User Name</label>
-                        <input type="text" id="delete-username" name="username" required>
-                    </div>
-                    <div class="pure-controls">
-                        <button type="submit" class="pure-button button-error">
-                            <img src="{{ url_for('static', filename='icons/user_delete.svg') }}" alt="Delete">
-                            <span>Delete User</span>
-                        </button>
-                    </div>
-                </fieldset>
-            </form>
-        </div>
-    </div>
 </div>
+
+<style>
+.nav-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin: 2rem auto;
+    max-width: 1200px;
+    padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+    .nav-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.nav-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+}
+
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+</style>
 {% endblock %} 

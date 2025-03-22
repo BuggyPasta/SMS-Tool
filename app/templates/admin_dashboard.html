@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if session.get('password_warning') %}
+<div class="password-warning">
+    ⚠️ Warning: You are using the default admin password. Please change it immediately for security reasons.
+    <a href="{{ url_for('admin.change_password') }}" class="warning-link">Change Password</a>
+</div>
+{% endif %}
+
 <div class="admin-dashboard">
     <div class="dashboard-header">
         <h1>Admin Dashboard</h1>
@@ -32,7 +39,6 @@
                 <div class="health-info">
                     <h3>Modem</h3>
                     <p class="status-message">Checking...</p>
-                    <div class="signal-strength"></div>
                     <div class="details"></div>
                 </div>
             </div>
@@ -63,46 +69,50 @@
 
     <div class="dashboard-section">
         <h2>Management</h2>
-        <div class="management-grid">
-            <a href="{{ url_for('admin.manage_users') }}" class="management-card">
-                <div class="card-icon">
-                    <img src="{{ url_for('static', filename='icons/users.svg') }}" alt="Users">
-                </div>
-                <div class="card-info">
-                    <h3>Manage Users</h3>
-                    <p>Add, edit, or remove user accounts</p>
-                </div>
+        <div class="nav-grid">
+            <a href="{{ url_for('admin.manage_users') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/user.svg') }}" alt="Manage Users">
+                <span>Manage Users</span>
             </a>
-
-            <a href="{{ url_for('admin.manage_templates') }}" class="management-card">
-                <div class="card-icon">
-                    <img src="{{ url_for('static', filename='icons/templates.svg') }}" alt="Templates">
-                </div>
-                <div class="card-info">
-                    <h3>Manage Templates</h3>
-                    <p>Create and edit message templates</p>
-                </div>
+            <a href="{{ url_for('admin.manage_templates') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/sms_edit.svg') }}" alt="Manage SMS Templates">
+                <span>Manage SMS Templates</span>
             </a>
-
-            <a href="{{ url_for('admin.sms_report') }}" class="management-card">
-                <div class="card-icon">
-                    <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Report">
-                </div>
-                <div class="card-info">
-                    <h3>SMS Report</h3>
-                    <p>View message history and statistics</p>
-                </div>
+            <a href="{{ url_for('admin.sms_report') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Show SMS Report">
+                <span>Show SMS Report</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Exit App">
+                <span>Exit App</span>
             </a>
         </div>
     </div>
 </div>
 
 <style>
+.password-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.warning-link {
+    color: #856404;
+    text-decoration: underline;
+    margin-left: 1rem;
+}
+
 .health-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
-    margin-top: 1rem;
+    margin-bottom: 2rem;
 }
 
 .health-card {
@@ -111,9 +121,8 @@
     padding: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
-    transition: all 0.3s ease;
 }
 
 .health-icon {
@@ -124,6 +133,7 @@
     justify-content: center;
     border-radius: 50%;
     background: #f8f9fa;
+    flex-shrink: 0;
 }
 
 .health-icon img {
@@ -146,72 +156,70 @@
     font-size: 0.9rem;
 }
 
-.health-card.healthy {
-    border-left: 4px solid #28a745;
-}
-
-.health-card.unhealthy {
-    border-left: 4px solid #dc3545;
-}
-
-.signal-strength {
-    height: 4px;
-    background: #e9ecef;
-    border-radius: 2px;
-    margin-top: 0.5rem;
-}
-
-.signal-strength::before {
-    content: '';
-    display: block;
-    height: 100%;
-    background: #28a745;
-    border-radius: 2px;
-    width: var(--signal-strength, 0%);
-    transition: width 0.3s ease;
-}
-
 .details {
     font-size: 0.8rem;
     color: #666;
-    margin: 0.25rem 0;
-    word-break: break-word;
+    margin-top: 0.5rem;
 }
 
-.button-grid {
+.nav-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
     margin-top: 1rem;
 }
 
-.dashboard-button {
+@media (max-width: 768px) {
+    .nav-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nav-button {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
+    justify-content: center;
+    padding: 2rem;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     text-decoration: none;
     color: #333;
     transition: all 0.3s ease;
+    height: 100%;
 }
 
-.dashboard-button:hover {
+.nav-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.dashboard-button img {
-    width: 24px;
-    height: 24px;
+.nav-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+}
+
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.dashboard-section {
+    margin-bottom: 2rem;
+}
+
+.dashboard-section h2 {
+    margin-bottom: 1rem;
+    color: #333;
 }
 </style>
 
 <script>
 function formatModemInfo(info) {
-    if (!info) return '';
+    if (!info) return 'Connection error';
     const details = [];
     
     if (info.signal) {
@@ -227,11 +235,11 @@ function formatModemInfo(info) {
         details.push(`Model: ${info.model}`);
     }
     
-    return details.join('<br>');
+    return details.join('<br>') || 'Connection error';
 }
 
 function formatSIMInfo(info) {
-    if (!info) return '';
+    if (!info) return 'Connection error';
     const details = [];
     
     if (info.imsi) {
@@ -241,59 +249,58 @@ function formatSIMInfo(info) {
         details.push(`Status: ${info.status}`);
     }
     
-    return details.join('<br>');
+    return details.join('<br>') || 'Connection error';
 }
 
 function formatNetworkInfo(info) {
-    if (!info) return '';
+    if (!info) return 'Connection error';
     const details = [];
     
-    if (info.NetworkName) {
-        details.push(`Network: ${info.NetworkName}`);
+    if (info.network) {
+        details.push(`Network: ${info.network}`);
     }
-    if (info.State) {
-        details.push(`State: ${info.State}`);
-    }
-    if (info.PacketState) {
-        details.push(`Packet: ${info.PacketState}`);
+    if (info.signal) {
+        details.push(`Signal: ${info.signal}%`);
     }
     
-    return details.join('<br>');
+    return details.join('<br>') || 'Connection error';
 }
 
-function updateHealthStatus() {
+function updateHealth() {
     fetch('/health')
         .then(response => response.json())
         .then(data => {
-            // Update database health
+            const components = data.components || {};
+            
+            // Update Database
             const dbCard = document.getElementById('database-health');
-            dbCard.className = `health-card ${data.components.database.status}`;
-            dbCard.querySelector('.status-message').textContent = data.components.database.message || data.components.database.status;
-
-            // Update modem health
+            const dbStatus = components.database?.status || 'unhealthy';
+            dbCard.className = `health-card ${dbStatus}`;
+            dbCard.querySelector('.status-message').textContent = dbStatus === 'healthy' ? 'Connected' : 'Connection error';
+            
+            // Update Modem
             const modemCard = document.getElementById('modem-health');
-            modemCard.className = `health-card ${data.components.modem.status}`;
-            modemCard.querySelector('.status-message').textContent = data.components.modem.status;
-            if (data.components.modem.info && data.components.modem.info.signal) {
-                modemCard.querySelector('.signal-strength').style.setProperty('--signal-strength', `${data.components.modem.info.signal.SignalPercent}%`);
-            }
-            modemCard.querySelector('.details').innerHTML = formatModemInfo(data.components.modem.info);
-
-            // Update SIM health
+            const modemStatus = components.modem?.status || 'unhealthy';
+            modemCard.className = `health-card ${modemStatus}`;
+            modemCard.querySelector('.status-message').textContent = modemStatus === 'healthy' ? 'Connected' : 'Connection error';
+            modemCard.querySelector('.details').innerHTML = formatModemInfo(components.modem?.info);
+            
+            // Update SIM
             const simCard = document.getElementById('sim-health');
-            simCard.className = `health-card ${data.components.sim.status}`;
-            simCard.querySelector('.status-message').textContent = data.components.sim.status;
-            simCard.querySelector('.details').innerHTML = formatSIMInfo(data.components.sim.info);
-
-            // Update network health
+            const simStatus = components.sim?.status || 'unhealthy';
+            simCard.className = `health-card ${simStatus}`;
+            simCard.querySelector('.status-message').textContent = simStatus === 'healthy' ? 'Ready' : 'Connection error';
+            simCard.querySelector('.details').innerHTML = formatSIMInfo(components.sim?.info);
+            
+            // Update Network
             const networkCard = document.getElementById('network-health');
-            networkCard.className = `health-card ${data.components.network.status}`;
-            networkCard.querySelector('.status-message').textContent = data.components.network.status;
-            networkCard.querySelector('.details').innerHTML = formatNetworkInfo(data.components.network.info);
+            const networkStatus = components.network?.status || 'unhealthy';
+            networkCard.className = `health-card ${networkStatus}`;
+            networkCard.querySelector('.status-message').textContent = networkStatus === 'healthy' ? 'Connected' : 'Connection error';
+            networkCard.querySelector('.details').innerHTML = formatNetworkInfo(components.network?.info);
         })
         .catch(error => {
-            console.error('Error fetching health status:', error);
-            // Update all cards to show error state
+            console.error('Health check failed:', error);
             document.querySelectorAll('.health-card').forEach(card => {
                 card.className = 'health-card unhealthy';
                 card.querySelector('.status-message').textContent = 'Connection error';
@@ -303,8 +310,8 @@ function updateHealthStatus() {
         });
 }
 
-// Update health status every 30 seconds
-updateHealthStatus();
-setInterval(updateHealthStatus, 30000);
+// Update health status every 5 seconds
+updateHealth();
+setInterval(updateHealth, 5000);
 </script>
 {% endblock %} 

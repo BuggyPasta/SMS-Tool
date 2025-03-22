@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="delete-user">
+    <h2>Delete User</h2>
+    <div class="user-list">
+        {% for user in users %}
+        <div class="user-item">
+            <span class="username">{{ user.username }}</span>
+            <button class="delete-button" onclick="showConfirmation('{{ user.username }}')">DELETE</button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="confirmation-dialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog-content">
+        <p>All the SMS messages that the user <strong id="selected-user"></strong> has sent until now will be retained in the program's history. Are you sure you want to proceed with the deletion of this user? PLEASE PROCEED WITH CARE, THIS ACTION IS NOT REVERSIBLE. Do you wish to continue?</p>
+        <div class="dialog-buttons">
+            <form method="POST" id="delete-form">
+                <input type="hidden" name="username" id="username-input">
+                <button type="submit" class="delete-confirm-button">I understand, go ahead and delete this user permanently</button>
+            </form>
+            <button class="cancel-button" onclick="hideConfirmation()">No, that was a mistake, I want to keep this user, don't delete anything</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.delete-user {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.delete-user h2 {
+    margin: 0 0 2rem;
+    text-align: center;
+    color: #333;
+}
+
+.user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.username {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.delete-button {
+    padding: 0.5rem 1rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.delete-button:hover {
+    background: #c82333;
+}
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+}
+
+.dialog-content p {
+    margin: 0 0 2rem;
+    line-height: 1.5;
+}
+
+.dialog-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.delete-confirm-button {
+    padding: 1rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+}
+
+.cancel-button {
+    padding: 1rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+}
+
+.delete-confirm-button:hover {
+    background: #c82333;
+}
+
+.cancel-button:hover {
+    background: #5a6268;
+}
+</style>
+
+<script>
+function showConfirmation(username) {
+    document.getElementById('selected-user').textContent = username;
+    document.getElementById('username-input').value = username;
+    document.getElementById('confirmation-dialog').style.display = 'flex';
+}
+
+function hideConfirmation() {
+    document.getElementById('confirmation-dialog').style.display = 'none';
+}
+</script>
+{% endblock %} 
