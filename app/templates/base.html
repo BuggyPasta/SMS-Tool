@@ -48,33 +48,27 @@
     <style>
     body {
         min-height: 100vh;
-        margin: 0;
-        padding: 0;
         display: flex;
         flex-direction: column;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
-    body.light-mode {
-        background-color: #f8f9fa;
-        color: #333;
-    }
-
-    body.dark-mode {
-        background-color: #1a1a1a;
-        color: #f8f9fa;
+        margin: 0;
+        padding: 0;
     }
 
     .header {
-        text-align: center;
-        padding: 2rem;
+        background: #007bff;
+        color: white;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
     }
 
     .logo {
-        width: 120px;
-        height: auto;
-        margin-bottom: 1rem;
+        height: 40px;
+        width: auto;
     }
 
     .tagline {
@@ -85,230 +79,145 @@
 
     .main-content {
         flex: 1;
-        padding: 2rem;
-        width: 90%;
-        max-width: 1200px;
-        margin: 0 auto;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
     }
 
     .footer {
+        background: #f8f9fa;
+        padding: 1rem;
         text-align: center;
-        padding: 2rem;
+        position: relative;
+        z-index: 1;
         margin-top: auto;
-        background-color: #f8f9fa;
-        transition: background-color 0.3s ease;
     }
 
     .theme-toggle {
-        margin-bottom: 1rem;
+        position: absolute;
+        top: -2rem;
+        right: 1rem;
+        background: #fff;
+        border-radius: 50%;
+        padding: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     .theme-toggle img {
         width: 24px;
         height: 24px;
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-
-    .theme-toggle img:hover {
-        transform: scale(1.1);
     }
 
     .footer-line {
-        width: 90%;
         height: 1px;
-        background-color: #ddd;
-        margin: 1rem auto;
-        transition: background-color 0.3s ease;
+        background: #dee2e6;
+        margin: 0.5rem 0;
     }
 
     .footer-text {
-        font-size: 0.8rem;
-        transition: color 0.3s ease;
+        color: #6c757d;
+        font-size: 0.9rem;
     }
 
     .footer-text a {
-        color: inherit;
+        color: #007bff;
         text-decoration: none;
-        transition: color 0.3s ease;
     }
 
     .footer-text a:hover {
         text-decoration: underline;
     }
 
+    /* Light mode styles */
+    body.light-mode {
+        background: #f8f9fa;
+    }
+
+    body.light-mode .header {
+        background: #007bff;
+        color: white;
+    }
+
+    body.light-mode .tagline {
+        color: white;
+    }
+
+    body.light-mode .footer {
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+
     /* Dark mode styles */
-    body.dark-mode .footer {
-        background-color: #1a1a1a;
+    body.dark-mode {
+        background: #1a1a1a;
     }
 
-    body.dark-mode .footer-line {
-        background-color: #444;
-    }
-
-    body.dark-mode .footer-text,
-    body.dark-mode .footer-text a {
-        color: #f8f9fa;
-    }
-
-    body.dark-mode .theme-toggle {
-        filter: invert(1);
-    }
-
-    .app-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .app-header img {
-        width: 64px;
-        height: 64px;
-        margin-bottom: 1rem;
-    }
-
-    .app-header h1 {
-        font-size: 1.5rem;
-        color: #333;
-        margin: 0;
-    }
-
-    body.dark-mode .app-header h1 {
-        color: #f8f9fa;
-    }
-
-    .flash-messages {
-        max-width: 800px;
-        margin: 1rem auto;
-        padding: 0 1rem;
-    }
-
-    .flash-message {
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .flash-message.error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .flash-message.success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .flash-message.warning {
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeeba;
-    }
-
-    .flash-message.info {
-        background-color: #cce5ff;
-        color: #004085;
-        border: 1px solid #b8daff;
-    }
-
-    .nav-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 2rem;
-        margin: 2rem 0;
-        padding: 1rem;
-    }
-
-    .nav-button {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-        background: #fff;
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        text-decoration: none;
-        color: #333;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .nav-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .nav-button img {
-        width: 48px;
-        height: 48px;
-        margin-bottom: 1rem;
-    }
-
-    .nav-button span {
-        font-size: 1.1rem;
-        font-weight: 500;
-        text-align: center;
-    }
-
-    @media (max-width: 768px) {
-        .nav-grid {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        .nav-button {
-            padding: 1.5rem;
-        }
-    }
-
-    body.dark-mode .nav-button {
+    body.dark-mode .header {
         background: #2d2d2d;
         color: #f8f9fa;
     }
 
-    .content-wrapper {
-        min-height: calc(100vh - 200px);
-        display: flex;
-        flex-direction: column;
+    body.dark-mode .tagline {
+        color: #f8f9fa;
     }
 
-    .main-content {
-        flex: 1;
-        padding: 2rem;
+    body.dark-mode .footer {
+        background: #2d2d2d;
+        border-top: 1px solid #444;
+    }
+
+    body.dark-mode .footer-text {
+        color: #aaa;
+    }
+
+    body.dark-mode .footer-text a {
+        color: #80bdff;
+    }
+
+    body.dark-mode .theme-toggle {
+        background: #2d2d2d;
+    }
+
+    body.dark-mode .theme-toggle img {
+        filter: invert(1);
     }
     </style>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const body = document.body;
-        const themeToggleIcon = document.getElementById('theme-toggle-icon');
+        const themeToggle = document.querySelector('.theme-toggle');
+        const themeIcon = document.getElementById('theme-toggle-icon');
         
-        // Load theme from localStorage
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        body.classList.add(currentTheme + '-mode');
-        updateThemeIcon(currentTheme);
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            body.className = savedTheme;
+            updateThemeIcon(savedTheme === 'dark-mode');
+        }
         
-        // Theme toggle functionality
-        themeToggleIcon.addEventListener('click', function() {
-            const isDarkMode = body.classList.contains('dark-mode');
-            const newTheme = isDarkMode ? 'light' : 'dark';
+        // Toggle theme
+        themeToggle.addEventListener('click', function() {
+            const isDark = body.classList.toggle('dark-mode');
+            body.classList.toggle('light-mode');
             
-            body.classList.remove(isDarkMode ? 'dark-mode' : 'light-mode');
-            body.classList.add(newTheme + '-mode');
-            
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
+            // Save theme preference
+            localStorage.setItem('theme', isDark ? 'dark-mode' : 'light-mode');
+            updateThemeIcon(isDark);
         });
         
-        function updateThemeIcon(theme) {
-            themeToggleIcon.src = "{{ url_for('static', filename='icons/') }}" + 
-                                (theme === 'dark' ? 'mode_light.svg' : 'mode_dark.svg');
+        function updateThemeIcon(isDark) {
+            themeIcon.src = isDark 
+                ? "{{ url_for('static', filename='icons/mode_light.svg') }}"
+                : "{{ url_for('static', filename='icons/mode_dark.svg') }}";
         }
     });
     </script>
