@@ -31,26 +31,31 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 def cleanup_gammu():
-    """Cleanup function to properly close Gammu connection"""
+    """Clean up Gammu service"""
     global gammu_service
     if gammu_service:
+        logger.info("Cleaning up Gammu service")
         try:
-            gammu_service.close()
-            logger.info("Gammu service cleaned up successfully")
+            gammu_service.disconnect()
         except Exception as e:
             logger.error(f"Error during Gammu cleanup: {e}")
+        gammu_service = None
 
 def create_app():
     """Create and configure the Flask application"""
+    logger.info("Starting app creation")
     app = Flask(__name__)
     app.config.from_object(Config)
+    logger.info("Loaded configuration")
 
     # Register signal handlers
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
+    logger.info("Registered signal handlers")
 
     try:
         # Initialize database
+        logger.info("Initializing database")
         init_db()
         logger.info("Database initialized successfully")
     except Exception as e:
@@ -59,24 +64,30 @@ def create_app():
 
     try:
         # Initialize Gammu service
+        logger.info("Initializing Gammu service")
         global gammu_service
         gammu_service = GammuService()
         logger.info("Gammu service initialized successfully")
         
         # Register cleanup functions
         atexit.register(cleanup_gammu)
+        logger.info("Registered cleanup functions")
     except Exception as e:
         logger.error(f"Failed to initialize Gammu service: {str(e)}")
         raise
 
     # Register blueprints
+    logger.info("Registering blueprints")
     from .routes import auth_bp, admin_bp, user_bp, register_health_check
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)
+    logger.info("Blueprints registered")
     
     # Register health check endpoint
+    logger.info("Registering health check endpoint")
     register_health_check(app)
+    logger.info("Health check endpoint registered")
 
     @app.before_request
     def before_request():
@@ -98,4 +109,5 @@ def create_app():
             'message': str(error)
         }), 500
 
+    logger.info("App creation completed")
     return app 

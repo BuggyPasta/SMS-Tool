@@ -19,6 +19,7 @@ export PYTHONPATH=/app:${PYTHONPATH:-}
 
 # Create directories
 mkdir -p /app/instance /app/logs
+echo "Created necessary directories"
 
 # Run preflight checks
 echo "Running preflight checks..."
@@ -35,10 +36,23 @@ if [ ! -f "/app/instance/database.db" ]; then
     echo "✓ Database initialized successfully"
 fi
 
+# Debug information
+echo "Current working directory: $(pwd)"
+echo "Python path: $PYTHONPATH"
+echo "Checking port 4001..."
+netstat -tulpn | grep 4001 || echo "Port 4001 is free"
+echo "Checking Gammu config..."
+cat /etc/gammurc
+echo "Checking file permissions..."
+ls -la /app/instance /app/logs /etc/gammurc
+
 # Start Flask application
 echo "Starting Flask application..."
 cd /app
-exec gunicorn --bind 0.0.0.0:4001 \
+
+# Start gunicorn with debug output
+PYTHONUNBUFFERED=1 FLASK_DEBUG=1 exec gunicorn \
+    --bind 0.0.0.0:4001 \
     --workers 1 \
     --timeout 120 \
     --pid /app/flask.pid \
@@ -47,4 +61,5 @@ exec gunicorn --bind 0.0.0.0:4001 \
     --error-logfile /app/logs/error.log \
     --capture-output \
     --enable-stdio-inheritance \
+    --preload \
     'app:create_app()' 

@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     gcc \
     sqlite3 \
     curl \
+    net-tools \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
