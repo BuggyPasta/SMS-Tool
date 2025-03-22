@@ -95,6 +95,8 @@
         text-align: center;
         padding: 2rem;
         margin-top: auto;
+        background-color: #f8f9fa;
+        transition: background-color 0.3s ease;
     }
 
     .theme-toggle {
@@ -117,15 +119,18 @@
         height: 1px;
         background-color: #ddd;
         margin: 1rem auto;
+        transition: background-color 0.3s ease;
     }
 
     .footer-text {
         font-size: 0.8rem;
+        transition: color 0.3s ease;
     }
 
     .footer-text a {
         color: inherit;
         text-decoration: none;
+        transition: color 0.3s ease;
     }
 
     .footer-text a:hover {
@@ -133,31 +138,21 @@
     }
 
     /* Dark mode styles */
-    .dark-mode .footer-line {
+    body.dark-mode .footer {
+        background-color: #1a1a1a;
+    }
+
+    body.dark-mode .footer-line {
         background-color: #444;
     }
 
-    .dark-mode .flash-message {
-        background-color: #2d2d2d;
-        border-color: #444;
+    body.dark-mode .footer-text,
+    body.dark-mode .footer-text a {
+        color: #f8f9fa;
     }
 
-    .dark-mode .flash-message.error {
-        background-color: #442424;
-        color: #ffb3b3;
-        border-color: #662424;
-    }
-
-    .dark-mode .flash-message.warning {
-        background-color: #443424;
-        color: #ffd9b3;
-        border-color: #664824;
-    }
-
-    .dark-mode .flash-message.success {
-        background-color: #244424;
-        color: #b3ffb3;
-        border-color: #246624;
+    body.dark-mode .theme-toggle {
+        filter: invert(1);
     }
 
     .app-header {
@@ -286,12 +281,6 @@
     .main-content {
         flex: 1;
         padding: 2rem;
-    }
-
-    .footer {
-        margin-top: auto;
-        padding: 2rem;
-        text-align: center;
     }
     </style>
 

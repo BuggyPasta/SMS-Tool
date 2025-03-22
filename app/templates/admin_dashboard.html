@@ -201,16 +201,8 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
-    margin-top: 1rem;
-    overflow-y: auto;
-    max-height: calc(100vh - 400px);
+    margin: 2rem 0;
     padding: 1rem;
-}
-
-@media (max-width: 768px) {
-    .nav-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .nav-button {
@@ -246,6 +238,30 @@
     text-align: center;
 }
 
+.dashboard-section {
+    margin-bottom: 4rem;
+}
+
+.dashboard-section h2 {
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .nav-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .nav-button {
+        padding: 1.5rem;
+    }
+
+    .dashboard-section {
+        margin-bottom: 2rem;
+    }
+}
+
 /* Dark mode styles */
 body.dark-mode .nav-button {
     background: #2d2d2d;
@@ -267,15 +283,6 @@ body.dark-mode .health-info h3 {
 
 body.dark-mode .details {
     color: #aaa;
-}
-
-.dashboard-section {
-    margin-bottom: 2rem;
-}
-
-.dashboard-section h2 {
-    margin-bottom: 1rem;
-    color: #333;
 }
 </style>
 

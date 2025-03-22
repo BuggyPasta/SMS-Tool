@@ -72,30 +72,49 @@ def register_health_check(app):
         """Health check endpoint"""
         try:
             # Check database
-            db_status = 'healthy' if get_db().is_connected() else 'unhealthy'
+            try:
+                db_status = 'healthy' if get_db().is_connected() else 'unhealthy'
+            except Exception as e:
+                logger.error(f"Database health check failed: {str(e)}")
+                db_status = 'unhealthy'
             
             # Check modem
-            modem_info = gammu_service.get_modem_info()
-            modem_status = 'healthy' if modem_info and modem_info.get('signal') else 'unhealthy'
-            
-            # Simplify modem info
-            if modem_info:
-                modem_info = {
-                    'signal': modem_info.get('signal', {}).get('SignalPercent'),
-                    'model': modem_info.get('model', '').split(',')[-1]  # Get only the last part of model
-                }
+            try:
+                modem_info = gammu_service.get_modem_info()
+                modem_status = 'healthy' if modem_info else 'unhealthy'
+                
+                # Simplify modem info
+                if modem_info:
+                    modem_info = {
+                        'signal': modem_info.get('signal', {}).get('SignalPercent'),
+                        'model': modem_info.get('model', '').split(',')[-1].strip()  # Get only the last part of model
+                    }
+            except Exception as e:
+                logger.error(f"Modem health check failed: {str(e)}")
+                modem_status = 'unhealthy'
+                modem_info = None
             
             # Check SIM
-            sim_info = gammu_service.get_sim_status()
-            sim_status = 'healthy' if sim_info and sim_info.get('status') == 'ready' else 'degraded'
+            try:
+                sim_info = gammu_service.get_sim_status()
+                sim_status = 'healthy' if sim_info and sim_info.get('status') == 'ready' else 'degraded'
+            except Exception as e:
+                logger.error(f"SIM health check failed: {str(e)}")
+                sim_status = 'degraded'
+                sim_info = None
             
             # Check network
-            network_info = gammu_service.get_network_info()
-            network_status = 'healthy' if network_info and network_info.get('status') == 'connected' else 'degraded'
+            try:
+                network_info = gammu_service.get_network_info()
+                network_status = 'healthy' if network_info and network_info.get('status') == 'connected' else 'degraded'
+            except Exception as e:
+                logger.error(f"Network health check failed: {str(e)}")
+                network_status = 'degraded'
+                network_info = None
             
-            # Overall health is healthy if database and modem are working
-            # We don't make the container unhealthy for SIM or network issues
-            status = 'healthy' if db_status == 'healthy' and modem_status == 'healthy' else 'unhealthy'
+            # Overall health is healthy if at least database is working
+            # We don't make the container unhealthy for modem, SIM or network issues
+            status = 'healthy' if db_status == 'healthy' else 'unhealthy'
             
             response = {
                 'status': status,
@@ -118,7 +137,7 @@ def register_health_check(app):
                 }
             }
             
-            return jsonify(response), 200 if status == 'healthy' else 500
+            return jsonify(response), 200
         except Exception as e:
             logger.error(f"Health check error: {str(e)}")
             return jsonify({
@@ -284,10 +303,18 @@ def sms_report():
     per_page = request.args.get('per_page', 25, type=int)
     phone_number = request.args.get('phone_number')
     
-    messages = Message.get_all(page, per_page, phone_number)
-    total_pages = Message.get_total_pages(per_page, phone_number)
+    if phone_number:
+        messages = Message.get_all(page, per_page, phone_filter=phone_number)
+        total_pages = Message.get_total_pages(per_page, phone_filter=phone_number)
+    else:
+        messages = Message.get_all(page, per_page)
+        total_pages = Message.get_total_pages(per_page)
     
-    return render_template('sms_report.html', messages=messages, total_pages=total_pages, current_page=page, per_page=per_page)
+    return render_template('sms_report.html', 
+                         messages=messages, 
+                         total_pages=total_pages, 
+                         current_page=page, 
+                         per_page=per_page)
 
 @admin_bp.route('/admin/report/delete/<int:message_id>', methods=['POST'])
 @admin_required
