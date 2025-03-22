@@ -70,71 +70,61 @@ def register_health_check(app):
     @app.route('/health')
     def health_check():
         """Health check endpoint"""
-        logger.debug("Running health check")
-        components = {}
-        overall_status = 'healthy'
-
         try:
-            # Get modem info
-            logger.debug("Checking modem health")
-            try:
-                modem_info = gammu_service.get_modem_info()
-                components['modem'] = {
-                    'status': 'healthy',
-                    'info': modem_info
+            # Check database
+            db_status = 'healthy' if get_db().is_connected() else 'unhealthy'
+            
+            # Check modem
+            modem_info = gammu_service.get_modem_info()
+            modem_status = 'healthy' if modem_info and modem_info.get('signal') else 'unhealthy'
+            
+            # Simplify modem info
+            if modem_info:
+                modem_info = {
+                    'signal': modem_info.get('signal', {}).get('SignalPercent'),
+                    'model': modem_info.get('model', '').split(',')[-1]  # Get only the last part of model
                 }
-                logger.debug("Modem health check passed")
-            except Exception as e:
-                logger.warning(f"Modem health check degraded: {e}")
-                components['modem'] = {
-                    'status': 'degraded',
-                    'error': str(e)
+            
+            # Check SIM
+            sim_info = gammu_service.get_sim_status()
+            sim_status = 'healthy' if sim_info and sim_info.get('status') == 'ready' else 'degraded'
+            
+            # Check network
+            network_info = gammu_service.get_network_info()
+            network_status = 'healthy' if network_info and network_info.get('status') == 'connected' else 'degraded'
+            
+            # Overall health is healthy if database and modem are working
+            # We don't make the container unhealthy for SIM or network issues
+            status = 'healthy' if db_status == 'healthy' and modem_status == 'healthy' else 'unhealthy'
+            
+            response = {
+                'status': status,
+                'components': {
+                    'database': {
+                        'status': db_status
+                    },
+                    'modem': {
+                        'status': modem_status,
+                        'info': modem_info
+                    },
+                    'sim': {
+                        'status': sim_status,
+                        'info': sim_info
+                    },
+                    'network': {
+                        'status': network_status,
+                        'info': network_info
+                    }
                 }
-                overall_status = 'degraded'
-
-            # Get SIM status
-            logger.debug("Checking SIM health")
-            try:
-                sim_info = gammu_service.get_sim_status()
-                components['sim'] = {
-                    'status': 'healthy' if sim_info['status'] == 'ready' else 'degraded',
-                    'info': sim_info
-                }
-                if sim_info['status'] != 'ready':
-                    overall_status = 'degraded'
-                logger.debug("SIM health check completed")
-            except Exception as e:
-                logger.warning(f"SIM health check degraded: {e}")
-                components['sim'] = {
-                    'status': 'degraded',
-                    'error': str(e)
-                }
-                overall_status = 'degraded'
-
-            # Get network status
-            logger.debug("Checking network health")
-            try:
-                network_info = gammu_service.get_network_status()
-                components['network'] = {
-                    'status': 'healthy',
-                    'info': network_info
-                }
-                logger.debug("Network health check passed")
-            except Exception as e:
-                logger.warning(f"Network health check degraded: {e}")
-                components['network'] = {
-                    'status': 'degraded',
-                    'error': str(e)
-                }
-                overall_status = 'degraded'
-
-            return standardize_health_response(overall_status, components)
-
+            }
+            
+            return jsonify(response), 200 if status == 'healthy' else 500
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
-            return standardize_health_response('unhealthy', {
+            logger.error(f"Health check error: {str(e)}")
+            return jsonify({
+                'status': 'unhealthy',
                 'error': str(e)
-            })
+            }), 500
 
 def login_required(f):
     @wraps(f)

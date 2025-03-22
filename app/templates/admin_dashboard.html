@@ -19,49 +19,47 @@
         </div>
     </div>
 
-    <div class="dashboard-section">
+    <div class="health-section">
         <h2>System Health</h2>
         <div class="health-grid">
-            <div class="health-card" id="database-health">
+            <div id="database-health" class="health-card">
                 <div class="health-icon">
-                    <img src="{{ url_for('static', filename='icons/database.svg') }}" alt="Database">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
                 </div>
                 <div class="health-info">
                     <h3>Database</h3>
-                    <p class="status-message">Checking...</p>
+                    <div class="status-message">Checking...</div>
                 </div>
             </div>
-
-            <div class="health-card" id="modem-health">
+            
+            <div id="modem-health" class="health-card">
                 <div class="health-icon">
-                    <img src="{{ url_for('static', filename='icons/modem.svg') }}" alt="Modem">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
                 </div>
                 <div class="health-info">
                     <h3>Modem</h3>
-                    <p class="status-message">Checking...</p>
+                    <div class="status-message">Checking...</div>
                     <div class="details"></div>
                 </div>
             </div>
-
-            <div class="health-card" id="sim-health">
+            
+            <div id="sim-health" class="health-card">
                 <div class="health-icon">
-                    <img src="{{ url_for('static', filename='icons/sim.svg') }}" alt="SIM">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
                 </div>
                 <div class="health-info">
                     <h3>SIM Card</h3>
-                    <p class="status-message">Checking...</p>
-                    <div class="details"></div>
+                    <div class="status-message">Checking...</div>
                 </div>
             </div>
-
-            <div class="health-card" id="network-health">
+            
+            <div id="network-health" class="health-card">
                 <div class="health-icon">
-                    <img src="{{ url_for('static', filename='icons/network.svg') }}" alt="Network">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
                 </div>
                 <div class="health-info">
                     <h3>Network</h3>
-                    <p class="status-message">Checking...</p>
-                    <div class="details"></div>
+                    <div class="status-message">Checking...</div>
                 </div>
             </div>
         </div>
@@ -118,22 +116,23 @@
 .health-card {
     background: #fff;
     border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
     display: flex;
     align-items: flex-start;
     gap: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .health-icon {
-    width: 48px;
-    height: 48px;
+    width: 24px;
+    height: 24px;
+    padding: 0.5rem;
+    border-radius: 50%;
+    background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: #f8f9fa;
-    flex-shrink: 0;
 }
 
 .health-icon img {
@@ -146,20 +145,29 @@
 }
 
 .health-info h3 {
-    margin: 0;
+    margin: 0 0 0.5rem;
     font-size: 1.1rem;
     color: #333;
 }
 
 .status-message {
-    margin: 0.5rem 0;
-    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
 }
 
 .details {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: #666;
-    margin-top: 0.5rem;
+    margin: 0;
+}
+
+.health-card.healthy .status-message {
+    color: #28a745;
+}
+
+.health-card.unhealthy .status-message,
+.health-card.degraded .status-message {
+    color: #dc3545;
 }
 
 .header-actions {
@@ -330,39 +338,45 @@ function updateHealth() {
             const dbCard = document.getElementById('database-health');
             const dbStatus = components.database?.status || 'unhealthy';
             dbCard.className = `health-card ${dbStatus}`;
+            dbCard.querySelector('.health-icon img').src = `/static/icons/${dbStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
             dbCard.querySelector('.status-message').textContent = dbStatus === 'healthy' ? 'Connected' : 'Not Connected';
             
             // Update Modem
             const modemCard = document.getElementById('modem-health');
             const modemStatus = components.modem?.status || 'unhealthy';
             modemCard.className = `health-card ${modemStatus}`;
+            modemCard.querySelector('.health-icon img').src = `/static/icons/${modemStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
             modemCard.querySelector('.status-message').textContent = modemStatus === 'healthy' ? 'Connected' : 'Not Connected';
             if (components.modem?.info) {
-                modemCard.querySelector('.details').innerHTML = formatModemInfo(components.modem.info);
+                const info = [];
+                if (components.modem.info.signal) {
+                    info.push(`Signal: ${components.modem.info.signal}%`);
+                }
+                if (components.modem.info.model) {
+                    info.push(`Model: ${components.modem.info.model}`);
+                }
+                modemCard.querySelector('.details').innerHTML = info.join('<br>');
             }
             
             // Update SIM
             const simCard = document.getElementById('sim-health');
             const simStatus = components.sim?.status || 'unhealthy';
             simCard.className = `health-card ${simStatus}`;
+            simCard.querySelector('.health-icon img').src = `/static/icons/${simStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
             simCard.querySelector('.status-message').textContent = simStatus === 'healthy' ? 'Ready' : 'Not Ready';
-            if (components.sim?.info) {
-                simCard.querySelector('.details').innerHTML = formatSIMInfo(components.sim.info);
-            }
             
             // Update Network
             const networkCard = document.getElementById('network-health');
             const networkStatus = components.network?.status || 'unhealthy';
             networkCard.className = `health-card ${networkStatus}`;
+            networkCard.querySelector('.health-icon img').src = `/static/icons/${networkStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
             networkCard.querySelector('.status-message').textContent = networkStatus === 'healthy' ? 'Connected' : 'Not Connected';
-            if (components.network?.info) {
-                networkCard.querySelector('.details').innerHTML = formatNetworkInfo(components.network.info);
-            }
         })
         .catch(error => {
             console.error('Health check failed:', error);
             document.querySelectorAll('.health-card').forEach(card => {
                 card.className = 'health-card unhealthy';
+                card.querySelector('.health-icon img').src = '/static/icons/working_error.svg';
                 card.querySelector('.status-message').textContent = 'Not Connected';
                 const details = card.querySelector('.details');
                 if (details) details.innerHTML = '';

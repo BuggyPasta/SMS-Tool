@@ -17,9 +17,15 @@
     <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+            <div class="flash-messages">
                 {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% if category != 'error' or not session['user_id'] %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endif %}
                 {% endfor %}
+            </div>
             {% endif %}
         {% endwith %}
 
@@ -152,6 +158,140 @@
         background-color: #244424;
         color: #b3ffb3;
         border-color: #246624;
+    }
+
+    .app-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .app-header img {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1rem;
+    }
+
+    .app-header h1 {
+        font-size: 1.5rem;
+        color: #333;
+        margin: 0;
+    }
+
+    body.dark-mode .app-header h1 {
+        color: #f8f9fa;
+    }
+
+    .flash-messages {
+        max-width: 800px;
+        margin: 1rem auto;
+        padding: 0 1rem;
+    }
+
+    .flash-message {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .flash-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .flash-message.warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+
+    .flash-message.info {
+        background-color: #cce5ff;
+        color: #004085;
+        border: 1px solid #b8daff;
+    }
+
+    .nav-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin: 2rem 0;
+        padding: 1rem;
+    }
+
+    .nav-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: #fff;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .nav-button img {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 1rem;
+    }
+
+    .nav-button span {
+        font-size: 1.1rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .nav-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .nav-button {
+            padding: 1.5rem;
+        }
+    }
+
+    body.dark-mode .nav-button {
+        background: #2d2d2d;
+        color: #f8f9fa;
+    }
+
+    .content-wrapper {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 2rem;
+    }
+
+    .footer {
+        margin-top: auto;
+        padding: 2rem;
+        text-align: center;
     }
     </style>
 

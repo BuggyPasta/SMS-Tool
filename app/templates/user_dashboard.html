@@ -2,6 +2,13 @@
 
 {% block content %}
 <div class="user-dashboard">
+    <div class="header-actions">
+        <a href="{{ url_for('auth.logout') }}" class="logout-button">
+            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+            <span>Log Out</span>
+        </a>
+    </div>
+
     <h2>Send SMS Message</h2>
     <form method="POST" action="{{ url_for('user.send_sms') }}" class="sms-form">
         <div class="form-group">
@@ -26,15 +33,11 @@
             <div class="char-counter"><span class="current-chars">0</span>/160</div>
         </div>
 
-        <div class="button-group">
-            <button type="submit" class="send-button">
+        <div class="nav-grid">
+            <button type="submit" class="nav-button">
                 <img src="{{ url_for('static', filename='icons/sms_send.svg') }}" alt="Send">
-                <span>Send Message</span>
+                <span>Send this message</span>
             </button>
-            <a href="{{ url_for('auth.logout') }}" class="logout-button">
-                <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
-                <span>Log Out</span>
-            </a>
         </div>
     </form>
 </div>
@@ -47,6 +50,34 @@
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.header-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+    background: #c82333;
+}
+
+.logout-button img {
+    width: 20px;
+    height: 20px;
 }
 
 .user-dashboard h2 {
@@ -97,51 +128,44 @@
     color: #666;
 }
 
-.button-group {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-top: 1rem;
+.nav-grid {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
 }
 
-.send-button,
-.logout-button {
+.nav-button {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.send-button {
+    padding: 2rem;
     background: #28a745;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 200px;
 }
 
-.send-button:hover {
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     background: #218838;
 }
 
-.logout-button {
-    background: #dc3545;
-    color: white;
+.nav-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
 }
 
-.logout-button:hover {
-    background: #c82333;
-}
-
-.send-button img,
-.logout-button img {
-    width: 20px;
-    height: 20px;
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
 }
 
 @media (max-width: 768px) {
@@ -150,8 +174,8 @@
         padding: 1rem;
     }
 
-    .button-group {
-        grid-template-columns: 1fr;
+    .nav-button {
+        width: 100%;
     }
 }
 
