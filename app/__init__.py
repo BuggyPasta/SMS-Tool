@@ -63,17 +63,17 @@ def create_app():
         raise
 
     try:
-        # Initialize Gammu service
-        logger.info("Initializing Gammu service")
+        # Initialize Gammu service (but don't connect yet)
+        logger.info("Creating Gammu service instance")
         global gammu_service
         gammu_service = GammuService()
-        logger.info("Gammu service initialized successfully")
+        logger.info("Gammu service instance created")
         
         # Register cleanup functions
         atexit.register(cleanup_gammu)
         logger.info("Registered cleanup functions")
     except Exception as e:
-        logger.error(f"Failed to initialize Gammu service: {str(e)}")
+        logger.error(f"Failed to create Gammu service: {str(e)}")
         raise
 
     # Register blueprints

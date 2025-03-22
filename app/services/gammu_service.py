@@ -82,9 +82,22 @@ class GammuService:
         return cls._instance
 
     def __init__(self):
-        with self._lock:
-            if not self._is_connected:
-                self.connect()
+        """Initialize Gammu service"""
+        logger.info("Initializing GammuService")
+        self.state_machine = None
+        self.connected = False
+        try:
+            logger.debug("Creating Gammu state machine")
+            self.state_machine = gammu.StateMachine()
+            logger.debug("Reading Gammu config")
+            self.state_machine.ReadConfig(Filename='/etc/gammurc')
+            logger.info("Successfully initialized GammuService")
+        except gammu.ERR_NONE:
+            logger.warning("Gammu initialization warning, but continuing")
+            pass
+        except Exception as e:
+            logger.error(f"Failed to initialize GammuService: {e}")
+            raise GammuError(f"Failed to initialize Gammu: {str(e)}", ErrorCode.GAMMU_INIT_FAILED)
 
     def __del__(self):
         """Ensure cleanup when instance is destroyed"""
@@ -125,104 +138,83 @@ class GammuService:
 
     def connect(self):
         """Connect to the modem"""
-        with self._lock:
-            if self._is_connected:
-                logger.info("Already connected to modem")
-                return
+        if self.connected:
+            logger.debug("Already connected")
+            return True
 
-            connect_start = time.time()
-            try:
-                # Check device existence
-                if not os.path.exists('/dev/ttyUSB3'):
-                    raise DeviceError(
-                        "Device /dev/ttyUSB3 does not exist",
-                        error_code=ErrorCode.DEVICE_NOT_FOUND
-                    )
+        logger.info("Connecting to modem")
+        try:
+            logger.debug("Attempting to initialize state machine")
+            self.state_machine.Init()
+            self.connected = True
+            logger.info("Successfully connected to modem")
+            return True
+        except gammu.ERR_DEVICENOTEXIST:
+            logger.error("Modem device not found")
+            raise ModemError("Modem device not found", ErrorCode.MODEM_NOT_FOUND)
+        except gammu.ERR_DEVICEBUSY:
+            logger.error("Modem device is busy")
+            raise ModemError("Modem device is busy", ErrorCode.MODEM_BUSY)
+        except gammu.ERR_DEVICEOPENERROR:
+            logger.error("Failed to open modem device")
+            raise ModemError("Failed to open modem device", ErrorCode.MODEM_OPEN_ERROR)
+        except Exception as e:
+            logger.error(f"Failed to connect to modem: {e}")
+            raise ModemError(f"Failed to connect to modem: {str(e)}", ErrorCode.MODEM_CONNECT_ERROR)
 
-                # Initialize state machine if not already initialized
-                if self.state_machine is None:
-                    self.state_machine = gammu.StateMachine()
-                    logger.info("State machine created")
-                
-                # Use minimal configuration
-                debug_config = {
-                    'Device': '/dev/ttyUSB3',
-                    'Connection': 'at',
-                    'Model': 'auto'
-                }
-                
-                # Try setting config directly
-                logger.info("Setting Gammu configuration programmatically")
-                try:
-                    self.state_machine.SetConfig(0, debug_config)
-                    logger.info("Config set successfully")
-                except Exception as e:
-                    logger.error(f"Failed to set config programmatically: {e}")
-                    # Fall back to reading from file
-                    logger.info("Falling back to reading config from /etc/gammurc")
-                    try:
-                        self.state_machine.ReadConfig(Filename='/etc/gammurc')
-                        logger.info("Config read successfully from file")
-                    except Exception as config_e:
-                        raise ConfigError(
-                            "Failed to read config from file",
-                            error_code=ErrorCode.CONFIGURATION_ERROR,
-                            original_error=config_e
-                        )
-                
-                # Initialize the connection with retries
-                max_retries = 3
-                last_error = None
-                for attempt in range(max_retries):
-                    try:
-                        self.state_machine.Init()
-                        self._is_connected = True
-                        logger.info("Successfully connected to modem")
-                        break
-                    except Exception as e:
-                        last_error = e
-                        logger.warning(f"Connection attempt {attempt + 1} failed: {e}")
-                        if attempt < max_retries - 1:
-                            time.sleep(2)  # Wait before retrying
-                
-                if not self._is_connected:
-                    raise ModemError(
-                        "Failed to initialize modem after multiple attempts",
-                        error_code=ErrorCode.MODEM_CONNECTION_FAILED,
-                        original_error=last_error
-                    )
-                
-                # Get basic modem info for diagnostics
-                if self._is_connected:
-                    try:
-                        manufacturer = self.state_machine.GetManufacturer()
-                        model = self.state_machine.GetModel()
-                        logger.info(f"Connected to {manufacturer} {model}")
-                        
-                        # Initialize connection state
-                        self._state.update(
-                            modem_status=self.check_modem_status(),
-                            signal_strength=self.get_signal_strength(),
-                            battery_status=self.get_battery_status(),
-                            sim_status=self.get_sim_status()
-                        )
-                    except Exception as e:
-                        logger.warning(f"Could not get modem details: {e}")
-                
-            except (ModemError, DeviceError, ConfigError) as e:
-                self._is_connected = False
-                self.state_machine = None
-                self._state.invalidate()
-                raise
-            except Exception as e:
-                self._is_connected = False
-                self.state_machine = None
-                self._state.invalidate()
-                raise ModemError(
-                    "Failed to connect to modem",
-                    error_code=ErrorCode.MODEM_CONNECTION_FAILED,
-                    original_error=e
-                )
+    def disconnect(self):
+        """Disconnect from the modem"""
+        if not self.connected:
+            logger.debug("Already disconnected")
+            return
+
+        logger.info("Disconnecting from modem")
+        try:
+            self.state_machine.Terminate()
+            self.connected = False
+            logger.info("Successfully disconnected from modem")
+        except Exception as e:
+            logger.error(f"Error during disconnect: {e}")
+            # Don't raise here as we're likely cleaning up
+
+    def get_modem_status(self):
+        """Get modem status information"""
+        logger.debug("Getting modem status")
+        try:
+            if not self.connected:
+                self.connect()
+            return self.state_machine.GetSecurityStatus()
+        except Exception as e:
+            logger.error(f"Failed to get modem status: {e}")
+            raise ModemError(f"Failed to get modem status: {str(e)}", ErrorCode.MODEM_STATUS_ERROR)
+
+    def get_sim_status(self):
+        """Get SIM card status"""
+        logger.debug("Getting SIM status")
+        try:
+            if not self.connected:
+                self.connect()
+            return self.state_machine.GetSIMIMSI()
+        except gammu.ERR_SECURITYERROR:
+            logger.error("SIM card locked")
+            raise SIMError("SIM card is locked", ErrorCode.SIM_LOCKED)
+        except gammu.ERR_INVALIDSIMCARD:
+            logger.error("Invalid SIM card")
+            raise SIMError("Invalid SIM card", ErrorCode.SIM_INVALID)
+        except Exception as e:
+            logger.error(f"Failed to get SIM status: {e}")
+            raise SIMError(f"Failed to get SIM status: {str(e)}", ErrorCode.SIM_STATUS_ERROR)
+
+    def get_network_status(self):
+        """Get network status"""
+        logger.debug("Getting network status")
+        try:
+            if not self.connected:
+                self.connect()
+            return self.state_machine.GetNetworkInfo()
+        except Exception as e:
+            logger.error(f"Failed to get network status: {e}")
+            raise NetworkError(f"Failed to get network status: {str(e)}", ErrorCode.NETWORK_STATUS_ERROR)
 
     def send_sms(self, phone_number: str, message: str, message_id: int) -> bool:
         """Send SMS message"""
