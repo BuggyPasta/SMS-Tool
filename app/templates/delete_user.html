@@ -138,6 +138,43 @@
 .cancel-button:hover {
     background: #5a6268;
 }
+
+.back-section {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.back-section .nav-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: none;
+    border-radius: 8px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.back-section .nav-button:hover {
+    background: #e9ecef;
+}
+
+.back-section .nav-button img {
+    width: 24px;
+    height: 24px;
+}
+
+body.dark-mode .back-section .nav-button {
+    background: #2d2d2d;
+    color: #fff;
+}
+
+body.dark-mode .back-section .nav-button:hover {
+    background: #3d3d3d;
+}
 </style>
 
 <script>
@@ -151,4 +188,12 @@ function hideConfirmation() {
     document.getElementById('confirmation-dialog').style.display = 'none';
 }
 </script>
+
+<div class="back-section">
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-button">
+        <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Back to Dashboard">
+        <span>Back to Dashboard</span>
+    </a>
+</div>
+
 {% endblock %} 

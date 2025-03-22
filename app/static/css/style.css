@@ -785,4 +785,46 @@ tr:hover {
     word-break: break-word;
     max-height: 300px;
     overflow-y: auto;
+}
+
+/* Dark mode styles */
+body.dark-theme {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+body.dark-theme .header {
+    background-color: #2d2d2d;
+}
+
+body.dark-theme label,
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6 {
+    color: #e0e0e0;
+}
+
+body.dark-theme .form-group label {
+    color: #e0e0e0;
+}
+
+body.dark-theme input,
+body.dark-theme select,
+body.dark-theme textarea {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #404040;
+}
+
+body.dark-theme .nav-button {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+body.dark-theme .nav-button:hover {
+    background-color: #404040;
 } 

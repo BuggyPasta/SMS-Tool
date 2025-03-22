@@ -72,10 +72,30 @@ class GammuService:
                 return True
 
             try:
+                # Check if device exists
+                if not os.path.exists(Config.USB_DEVICE):
+                    logger.error(f"Device {Config.USB_DEVICE} does not exist")
+                    raise ModemError(f"Device {Config.USB_DEVICE} not found", ErrorCode.MODEM_NOT_FOUND)
+
+                # Check device permissions
+                try:
+                    mode = os.stat(Config.USB_DEVICE).st_mode
+                    if not mode & os.W_OK:
+                        logger.error(f"Device {Config.USB_DEVICE} is not writable")
+                        raise ModemError(f"Device {Config.USB_DEVICE} not writable", ErrorCode.MODEM_OPEN_ERROR)
+                    if not mode & os.R_OK:
+                        logger.error(f"Device {Config.USB_DEVICE} is not readable")
+                        raise ModemError(f"Device {Config.USB_DEVICE} not readable", ErrorCode.MODEM_OPEN_ERROR)
+                except OSError as e:
+                    logger.error(f"Cannot access device {Config.USB_DEVICE}: {e}")
+                    raise ModemError(f"Cannot access device: {str(e)}", ErrorCode.MODEM_OPEN_ERROR)
+
+                # Initialize connection
                 self.state_machine.Init()
                 self.connected = True
                 logger.info("Successfully connected to modem")
                 return True
+
             except gammu.ERR_DEVICENOTEXIST:
                 logger.error("Modem device not found")
                 raise ModemError("Modem device not found", ErrorCode.MODEM_NOT_FOUND)

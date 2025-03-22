@@ -109,24 +109,30 @@
 }
 
 .template-actions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
     gap: 1rem;
-    margin-top: 1.5rem;
+    margin-top: 1rem;
 }
 
-.action-button {
+.template-button {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: 0.75rem;
+    padding: 1rem;
     border: none;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    height: 36px;
+    flex: 1;
+}
+
+.template-button img {
+    width: 24px;
+    height: 24px;
 }
 
 .save-button {
@@ -145,11 +151,6 @@
 
 .delete-button:hover {
     background: #c82333;
-}
-
-.action-button img {
-    width: 16px;
-    height: 16px;
 }
 
 .nav-buttons {

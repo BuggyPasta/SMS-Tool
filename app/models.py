@@ -333,20 +333,31 @@ class Message:
         finally:
             db.close()
 
-    @classmethod
-    def get_total_pages(cls, per_page, phone_filter=None):
+    @staticmethod
+    def get_total_pages(per_page=10):
         """Get total number of pages for pagination"""
-        db = get_db()
         try:
-            if phone_filter:
-                count = db.execute(
-                    'SELECT COUNT(*) as total FROM messages WHERE phone_number = ?',
-                    (phone_filter,)
-                ).fetchone()['total']
-            else:
-                count = db.execute('SELECT COUNT(*) as total FROM messages').fetchone()['total']
-            
-            return (count + per_page - 1) // per_page  # Ceiling division
+            db = get_db()
+            count = db.execute('SELECT COUNT(*) as count FROM messages').fetchone()['count']
+            return (count + per_page - 1) // per_page
         except Exception as e:
             logger.error(f"Error getting total pages: {str(e)}")
-            return 1  # Return at least 1 page on error 
+            return 0
+
+    @staticmethod
+    def get_messages(page=1, per_page=10):
+        """Get paginated messages with user information"""
+        try:
+            db = get_db()
+            offset = (page - 1) * per_page
+            messages = db.execute('''
+                SELECT m.*, u.username as sender_name 
+                FROM messages m 
+                LEFT JOIN users u ON m.sender_id = u.id 
+                ORDER BY m.created_at DESC 
+                LIMIT ? OFFSET ?
+            ''', (per_page, offset)).fetchall()
+            return messages
+        except Exception as e:
+            logger.error(f"Error getting messages: {str(e)}")
+            return [] 
