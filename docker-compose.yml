@@ -16,6 +16,7 @@ services:
       - /dev/ttyUSB3:/dev/ttyUSB3:rw
     group_add:
       - dialout
+      - tty
     environment:
       - FLASK_APP=app
       - FLASK_ENV=production
@@ -35,6 +36,7 @@ services:
       start_period: 60s
     cap_add:
       - SYS_ADMIN
+      - MKNOD
     security_opt:
       - seccomp:unconfined
     labels:

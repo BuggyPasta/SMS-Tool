@@ -86,7 +86,11 @@ def main():
     
     all_passed = True
     for check in checks:
-        if not check():
+        try:
+            if not check():
+                all_passed = False
+        except Exception as e:
+            logger.error(f"Check failed with error: {e}")
             all_passed = False
     
     if all_passed:
@@ -97,4 +101,8 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-    main() 
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Preflight checks failed with error: {e}")
+        sys.exit(1) 

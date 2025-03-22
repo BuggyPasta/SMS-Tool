@@ -21,6 +21,14 @@ export PYTHONPATH=/app:${PYTHONPATH:-}
 mkdir -p /app/instance /app/logs
 echo "Created necessary directories"
 
+# Set proper permissions for USB device
+if [ -e "/dev/ttyUSB3" ]; then
+    chmod 666 /dev/ttyUSB3
+    echo "Set permissions for /dev/ttyUSB3"
+else
+    echo "Warning: /dev/ttyUSB3 does not exist"
+fi
+
 # Run preflight checks
 echo "Running preflight checks..."
 python3 -c "from app.preflight import main; main()"
