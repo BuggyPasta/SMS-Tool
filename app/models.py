@@ -8,79 +8,9 @@ from datetime import datetime
 import pytz
 from .config import Config
 import logging
+from .database import get_db, init_db, is_connected  # Import from database.py
 
 logger = logging.getLogger(__name__)
-
-def get_db():
-    """Get database connection"""
-    db = sqlite3.connect(Config.DATABASE)
-    db.row_factory = sqlite3.Row
-    
-    # Add connection check method
-    def is_connected():
-        try:
-            db.execute('SELECT 1').fetchone()
-            return True
-        except sqlite3.Error:
-            return False
-    
-    # Attach the method to the connection object
-    db.is_connected = is_connected
-    return db
-
-def init_db():
-    """Initialize the database"""
-    db = None
-    try:
-        # Get absolute path to schema file
-        schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
-        if not os.path.exists(schema_path):
-            logger.error(f"Schema file not found at {schema_path}")
-            return False
-
-        logger.info(f"Initializing database with schema from {schema_path}")
-        
-        # Ensure database directory exists
-        db_dir = os.path.dirname(Config.DATABASE)
-        os.makedirs(db_dir, exist_ok=True)
-        
-        # Get database connection
-        db = get_db()
-        
-        # Read and execute schema
-        with open(schema_path, 'r') as f:
-            db.executescript(f.read())
-        db.commit()
-        
-        # Verify database was initialized correctly
-        try:
-            # Check if users table exists and has admin user
-            admin = db.execute('SELECT * FROM users WHERE username = ?', ('admin',)).fetchone()
-            if not admin:
-                logger.error("Database initialization failed: admin user not created")
-                return False
-                
-            # Check if templates table exists and has default template
-            default_template = db.execute('SELECT * FROM templates WHERE title = ?', ('Default',)).fetchone()
-            if not default_template:
-                logger.error("Database initialization failed: default template not created")
-                return False
-                
-            logger.info("Database initialization verified successfully")
-            return True
-        except sqlite3.Error as e:
-            logger.error(f"Database verification failed: {str(e)}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Error initializing database: {str(e)}")
-        return False
-    finally:
-        if db:
-            try:
-                db.close()
-            except Exception as e:
-                logger.error(f"Error closing database connection: {str(e)}")
 
 class User:
     @staticmethod

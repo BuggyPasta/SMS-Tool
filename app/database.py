@@ -1,3 +1,4 @@
+"""Database connection handling"""
 import sqlite3
 from flask import g, current_app
 import os
@@ -14,20 +15,7 @@ def get_db():
                 detect_types=sqlite3.PARSE_DECLTYPES
             )
             g.db.row_factory = sqlite3.Row
-            
-            # Add connection check method to the connection object
-            def _is_connected(conn):
-                try:
-                    conn.execute('SELECT 1').fetchone()
-                    return True
-                except sqlite3.Error as e:
-                    logger.error(f"Database connection check failed: {str(e)}")
-                    return False
-            
-            # Attach the method to the connection object
-            g.db.is_connected = lambda: _is_connected(g.db)
-            
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Failed to establish database connection: {str(e)}")
             raise
     return g.db
@@ -38,12 +26,11 @@ def close_db(e=None):
     if db is not None:
         try:
             db.close()
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Error closing database connection: {str(e)}")
 
 def init_db():
     """Initialize the database"""
-    db = None
     try:
         # Get absolute path to schema file
         schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
@@ -79,26 +66,11 @@ def init_db():
                 
             logger.info("Database initialization verified successfully")
             return True
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Database verification failed: {str(e)}")
             return False
     except Exception as e:
         logger.error(f"Database initialization failed: {str(e)}")
-        return False
-    finally:
-        if db:
-            try:
-                db.close()
-            except Exception as e:
-                logger.error(f"Error closing database connection: {str(e)}")
-
-def is_connected():
-    """Check if database is connected"""
-    try:
-        db = get_db()
-        return db.is_connected()
-    except Exception as e:
-        logger.error(f"Database connection check failed: {str(e)}")
         return False
 
 def init_app(app):

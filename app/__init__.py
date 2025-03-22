@@ -4,7 +4,7 @@ Flask application initialization
 
 from flask import Flask, jsonify, render_template, g
 from .config import Config
-from .models import init_db
+from .database import init_db, init_app as init_database
 from .services.gammu_service import GammuService
 from .logging_config import setup_logging
 import atexit
@@ -66,9 +66,7 @@ def create_app():
     try:
         # Initialize database
         logger.info("Initializing database")
-        if not init_db():
-            logger.error("Database initialization failed")
-            raise Exception("Failed to initialize database")
+        init_database(app)  # Initialize database with app context
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
