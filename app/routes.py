@@ -72,9 +72,11 @@ def register_health_check(app):
     def health_check():
         """Health check endpoint"""
         try:
-            # Check database
+            # Check database by executing a simple query
             try:
-                db_status = 'healthy' if is_connected() else 'unhealthy'
+                db = get_db()
+                db.execute('SELECT 1').fetchone()
+                db_status = 'healthy'
             except Exception as e:
                 logger.error(f"Database health check failed: {str(e)}")
                 db_status = 'unhealthy'

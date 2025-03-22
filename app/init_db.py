@@ -1,31 +1,36 @@
 """Database initialization script"""
+import os
+import sys
 from app import create_app
-from app.database import init_db, get_db
+from app.database import get_db, init_db
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('init_db')
 
 def main():
-    """Initialize the database"""
+    """Main function to initialize the database"""
     try:
         app = create_app()
         with app.app_context():
+            # Check database connection
+            try:
+                db = get_db()
+                # Test connection with a simple query
+                db.execute('SELECT 1').fetchone()
+            except Exception as e:
+                logger.error(f"Database connection failed: {str(e)}")
+                sys.exit(1)
+                
+            # Initialize database
             if not init_db():
                 logger.error("Database initialization failed")
-                return False
-                
-            # Verify database connection
-            db = get_db()
-            if not db.is_connected():
-                logger.error("Database connection verification failed")
-                return False
+                sys.exit(1)
                 
             logger.info("Database initialized successfully")
-            return True
+            
     except Exception as e:
         logger.error(f"Database initialization error: {str(e)}")
-        return False
+        sys.exit(1)
 
 if __name__ == '__main__':
-    import sys
-    sys.exit(0 if main() else 1) 
+    main() 
