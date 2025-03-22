@@ -54,6 +54,14 @@ class User:
         return user
 
     @staticmethod
+    def authenticate(username, password):
+        """Authenticate a user with username and password"""
+        user = User.get_by_username(username)
+        if user and user['password'] == password:  # In production, use proper password hashing
+            return user
+        return None
+
+    @staticmethod
     def create(username, password, is_admin=False):
         db = get_db()
         try:
@@ -77,6 +85,14 @@ class User:
             return False
         finally:
             db.close()
+
+    @staticmethod
+    def get_all():
+        """Get all users"""
+        db = get_db()
+        users = db.execute('SELECT * FROM users ORDER BY username').fetchall()
+        db.close()
+        return users
 
 class Template:
     @staticmethod

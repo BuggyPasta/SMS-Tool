@@ -163,16 +163,30 @@ class GammuService:
             if not self.connected:
                 self.connect()
             
-            return {
-                'imsi': self.state_machine.GetSIMIMSI(),
-                'status': self.state_machine.GetSIMStatus()
-            }
-        except gammu.ERR_SECURITYERROR:
-            logger.error("SIM card locked")
-            raise SIMError("SIM card is locked", ErrorCode.SIM_LOCKED)
-        except gammu.ERR_INVALIDSIMCARD:
-            logger.error("Invalid SIM card")
-            raise SIMError("Invalid SIM card", ErrorCode.SIM_INVALID)
+            # Try to get IMSI to verify SIM is working
+            try:
+                imsi = self.state_machine.GetIMSI()
+                return {
+                    'imsi': imsi,
+                    'status': 'ready'
+                }
+            except Exception as e:
+                if 'SIM not inserted' in str(e):
+                    return {
+                        'imsi': None,
+                        'status': 'not_inserted'
+                    }
+                elif 'security' in str(e).lower():
+                    return {
+                        'imsi': None,
+                        'status': 'locked'
+                    }
+                else:
+                    return {
+                        'imsi': None,
+                        'status': 'error'
+                    }
+            
         except Exception as e:
             logger.error(f"Failed to get SIM status: {e}")
             raise SIMError(f"Failed to get SIM status: {str(e)}", ErrorCode.SIM_STATUS_ERROR)

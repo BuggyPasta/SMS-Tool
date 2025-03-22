@@ -69,117 +69,72 @@ def register_health_check(app):
     """Register health check endpoint directly on the app"""
     @app.route('/health')
     def health_check():
-        """Check health of all system components"""
-        logger.debug("Health check requested")
-        
-        if not check_rate_limit():
-            logger.warning("Rate limit exceeded for health check")
-            return standardize_health_response(
-                'degraded',
-                error='Rate limit exceeded'
-            )
-
-        components = {
-            'database': {'status': 'unknown'},
-            'modem': {'status': 'unknown'},
-            'sim': {'status': 'unknown'},
-            'network': {'status': 'unknown'}
-        }
-        
-        try:
-            # Check database
-            logger.debug("Checking database health")
-            db = get_db()
-            db.execute('SELECT 1')
-            components['database'] = {
-                'status': 'healthy',
-                'message': 'Database connection successful'
-            }
-            db.close()
-            logger.debug("Database health check passed")
-        except Exception as e:
-            logger.error(f"Database health check failed: {e}")
-            components['database'] = {
-                'status': 'unhealthy',
-                'error': str(e)
-            }
-            return standardize_health_response('unhealthy', components)
+        """Health check endpoint"""
+        logger.debug("Running health check")
+        components = {}
+        overall_status = 'healthy'
 
         try:
-            # Check modem status
+            # Get modem info
             logger.debug("Checking modem health")
-            if not gammu_service:
-                logger.error("Gammu service not initialized")
-                raise ModemError("Modem service not initialized", ErrorCode.MODEM_NOT_CONNECTED)
-            
-            # Get modem info - this may be partial
-            modem_info = gammu_service.get_modem_info()
-            
-            # For USB powered devices, battery info will show as USB_POWERED
-            if modem_info.get('battery', {}).get('ChargeState') == 'USB_POWERED':
-                logger.debug("Device is USB powered")
-            
-            if any(v is not None for v in modem_info.values()):
+            try:
+                modem_info = gammu_service.get_modem_info()
                 components['modem'] = {
                     'status': 'healthy',
                     'info': modem_info
                 }
                 logger.debug("Modem health check passed")
-            else:
+            except Exception as e:
+                logger.warning(f"Modem health check degraded: {e}")
                 components['modem'] = {
                     'status': 'degraded',
-                    'error': 'No modem information available'
+                    'error': str(e)
                 }
-                logger.warning("Modem health check degraded - no information available")
-            
+                overall_status = 'degraded'
+
             # Get SIM status
             logger.debug("Checking SIM health")
-            sim_info = gammu_service.get_sim_status()
-            components['sim'] = {
-                'status': 'healthy',
-                'info': sim_info
-            }
-            logger.debug("SIM health check passed")
-            
+            try:
+                sim_info = gammu_service.get_sim_status()
+                components['sim'] = {
+                    'status': 'healthy' if sim_info['status'] == 'ready' else 'degraded',
+                    'info': sim_info
+                }
+                if sim_info['status'] != 'ready':
+                    overall_status = 'degraded'
+                logger.debug("SIM health check completed")
+            except Exception as e:
+                logger.warning(f"SIM health check degraded: {e}")
+                components['sim'] = {
+                    'status': 'degraded',
+                    'error': str(e)
+                }
+                overall_status = 'degraded'
+
             # Get network status
             logger.debug("Checking network health")
-            network_info = gammu_service.get_network_status()
-            components['network'] = {
-                'status': 'healthy',
-                'info': network_info
-            }
-            logger.debug("Network health check passed")
-            
-        except ModemError as e:
-            logger.error(f"Modem health check failed: {e}")
-            components['modem'] = {
-                'status': 'unhealthy',
-                'error': str(e)
-            }
-            return standardize_health_response('unhealthy', components)
-            
-        except SIMError as e:
-            logger.error(f"SIM health check failed: {e}")
-            components['sim'] = {
-                'status': 'unhealthy',
-                'error': str(e)
-            }
-            return standardize_health_response('unhealthy', components)
-            
-        except NetworkError as e:
-            logger.error(f"Network health check failed: {e}")
-            components['network'] = {
-                'status': 'unhealthy',
-                'error': str(e)
-            }
-            return standardize_health_response('unhealthy', components)
+            try:
+                network_info = gammu_service.get_network_status()
+                components['network'] = {
+                    'status': 'healthy',
+                    'info': network_info
+                }
+                logger.debug("Network health check passed")
+            except Exception as e:
+                logger.warning(f"Network health check degraded: {e}")
+                components['network'] = {
+                    'status': 'degraded',
+                    'error': str(e)
+                }
+                overall_status = 'degraded'
 
-        # If we got here, at least some components are working
-        overall_status = 'healthy'
-        if any(c['status'] == 'degraded' for c in components.values()):
-            overall_status = 'degraded'
-        
-        return standardize_health_response(overall_status, components)
+            return standardize_health_response(overall_status, components)
+
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return standardize_health_response('unhealthy', {
+                'error': str(e)
+            })
 
 def login_required(f):
     @wraps(f)
@@ -206,11 +161,11 @@ def login():
         
         user = User.authenticate(username, password)
         if user:
-            session['user_id'] = user.id
-            session['is_admin'] = user.is_admin
-            if user.is_admin and user.password == 'admin':
+            session['user_id'] = user['id']
+            session['is_admin'] = user['is_admin']
+            if user['is_admin'] and user['password'] == 'admin':
                 flash('Please change your default admin password!', 'warning')
-            return redirect(url_for('admin.dashboard' if user.is_admin else 'user.dashboard'))
+            return redirect(url_for('admin.dashboard' if user['is_admin'] else 'user.dashboard'))
         flash('Invalid username or password', 'error')
     return render_template('login.html')
 
