@@ -2,136 +2,141 @@
 
 {% block content %}
 <div class="user-dashboard">
-    <div class="header-actions">
-        <a href="{{ url_for('auth.logout') }}" class="logout-button">
+    <div class="dashboard-header">
+        <h1>SMS Sending Form</h1>
+    </div>
+
+    <div class="sms-form">
+        <form action="{{ url_for('user.send_sms') }}" method="post">
+            <div class="form-group">
+                <label for="template">Select Template:</label>
+                <select id="template" name="template" onchange="loadTemplate()">
+                    <option value="">-- Select a template --</option>
+                    {% for template in templates %}
+                    <option value="{{ template.title }}">{{ template.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="phone_number">Phone Number:</label>
+                <input type="text" id="phone_number" name="phone_number" required pattern="07[0-9]{9}" placeholder="07XXXXXXXXX">
+            </div>
+
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" required maxlength="160"></textarea>
+                <div class="char-counter"><span id="char-count">0</span>/160</div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="send-button">
+                    <img src="{{ url_for('static', filename='icons/icon_sms.svg') }}" alt="Send">
+                    <span>Send Message</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="nav-buttons">
+        <button onclick="resetForm()" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/icon_sms.svg') }}" alt="New SMS">
+            <span>Send a new SMS</span>
+        </button>
+        <a href="{{ url_for('auth.logout') }}" class="nav-button">
             <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
             <span>Log Out</span>
         </a>
     </div>
-
-    <h2>Send SMS Message</h2>
-    <form method="POST" action="{{ url_for('user.send_sms') }}" class="sms-form">
-        <div class="form-group">
-            <label for="phone_number">Phone Number</label>
-            <input type="tel" id="phone_number" name="phone_number" pattern="07[0-9]{9}" placeholder="07XXXXXXXXX" required>
-            <small>Must start with 07 and be 11 digits long</small>
-        </div>
-
-        <div class="form-group">
-            <label for="template">Template (Optional)</label>
-            <select id="template" onchange="loadTemplate(this.value)">
-                <option value="">Select a template...</option>
-                {% for template in templates %}
-                <option value="{{ template.title }}">{{ template.title }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="message">Message</label>
-            <textarea id="message" name="message" rows="4" required></textarea>
-            <div class="char-counter"><span class="current-chars">0</span>/160</div>
-        </div>
-
-        <div class="nav-grid">
-            <button type="submit" class="nav-button">
-                <img src="{{ url_for('static', filename='icons/sms_send.svg') }}" alt="Send">
-                <span>Send this message</span>
-            </button>
-        </div>
-    </form>
 </div>
 
 <style>
 .user-dashboard {
     max-width: 800px;
-    margin: 2rem auto;
+    margin: 0 auto;
     padding: 2rem;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: relative;
 }
 
-.header-actions {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-}
-
-.logout-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #dc3545;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-}
-
-.logout-button:hover {
-    background: #c82333;
-}
-
-.logout-button img {
-    width: 20px;
-    height: 20px;
-}
-
-.user-dashboard h2 {
-    margin: 0 0 2rem;
+.dashboard-header {
     text-align: center;
-    color: #333;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 1.5rem;
+    margin: 0;
 }
 
 .sms-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #333;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
+    width: 100%;
     padding: 0.75rem;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 1rem;
 }
 
-.form-group small {
-    color: #666;
-    font-size: 0.8rem;
-}
-
 .form-group textarea {
+    min-height: 120px;
     resize: vertical;
-    min-height: 100px;
 }
 
 .char-counter {
     text-align: right;
     font-size: 0.9rem;
     color: #666;
+    margin-top: 0.5rem;
 }
 
-.nav-grid {
+.send-button {
     display: flex;
+    align-items: center;
     justify-content: center;
-    margin-top: 2rem;
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    background: #28a745;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.send-button:hover {
+    background: #218838;
+}
+
+.send-button img {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5rem;
+}
+
+.nav-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin: 2rem 0 4rem;
 }
 
 .nav-button {
@@ -140,20 +145,19 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: #28a745;
+    background: #fff;
     border: none;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    color: white;
+    text-decoration: none;
+    color: #333;
     cursor: pointer;
     transition: all 0.3s ease;
-    width: 200px;
 }
 
 .nav-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    background: #218838;
 }
 
 .nav-button img {
@@ -168,28 +172,9 @@
     text-align: center;
 }
 
-@media (max-width: 768px) {
-    .user-dashboard {
-        margin: 1rem;
-        padding: 1rem;
-    }
-
-    .nav-button {
-        width: 100%;
-    }
-}
-
 /* Dark mode styles */
-body.dark-mode .user-dashboard {
+body.dark-mode .sms-form {
     background: #2d2d2d;
-    color: #f8f9fa;
-}
-
-body.dark-mode .user-dashboard h2 {
-    color: #f8f9fa;
-}
-
-body.dark-mode .form-group label {
     color: #f8f9fa;
 }
 
@@ -201,42 +186,67 @@ body.dark-mode .form-group textarea {
     color: #f8f9fa;
 }
 
-body.dark-mode .form-group small {
+body.dark-mode .char-counter {
     color: #aaa;
 }
 
-body.dark-mode .char-counter {
-    color: #aaa;
+body.dark-mode .nav-button {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .user-dashboard {
+        padding: 1rem;
+    }
+
+    .nav-buttons {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .nav-button {
+        padding: 1.5rem;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const messageTextarea = document.getElementById('message');
-    const charCounter = document.querySelector('.char-counter .current-chars');
-    
+    const charCount = document.getElementById('char-count');
+
     messageTextarea.addEventListener('input', function() {
-        charCounter.textContent = this.value.length;
+        charCount.textContent = this.value.length;
     });
 });
 
-function loadTemplate(title) {
+function loadTemplate() {
+    const select = document.getElementById('template');
+    const title = select.value;
+    
     if (!title) {
         document.getElementById('message').value = '';
-        document.querySelector('.char-counter .current-chars').textContent = '0';
+        document.getElementById('char-count').textContent = '0';
         return;
     }
     
-    fetch(`/get-template/${title}`)
+    fetch(`{{ url_for('user.get_template', title='') }}${title}`)
         .then(response => response.json())
         .then(data => {
             if (data.content) {
-                const messageTextarea = document.getElementById('message');
-                messageTextarea.value = data.content;
-                document.querySelector('.char-counter .current-chars').textContent = data.content.length;
+                const textarea = document.getElementById('message');
+                textarea.value = data.content;
+                document.getElementById('char-count').textContent = data.content.length;
             }
-        })
-        .catch(error => console.error('Error loading template:', error));
+        });
+}
+
+function resetForm() {
+    document.getElementById('template').value = '';
+    document.getElementById('phone_number').value = '';
+    document.getElementById('message').value = '';
+    document.getElementById('char-count').textContent = '0';
 }
 </script>
 {% endblock %} 

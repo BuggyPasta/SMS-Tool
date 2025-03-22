@@ -81,7 +81,7 @@ def register_health_check(app):
             # Check modem
             try:
                 modem_info = gammu_service.get_modem_info()
-                modem_status = 'healthy' if modem_info else 'unhealthy'
+                modem_status = 'healthy' if modem_info else 'degraded'
                 
                 # Simplify modem info
                 if modem_info:
@@ -91,7 +91,7 @@ def register_health_check(app):
                     }
             except Exception as e:
                 logger.error(f"Modem health check failed: {str(e)}")
-                modem_status = 'unhealthy'
+                modem_status = 'degraded'
                 modem_info = None
             
             # Check SIM
@@ -112,12 +112,12 @@ def register_health_check(app):
                 network_status = 'degraded'
                 network_info = None
             
-            # Overall health is healthy if at least database is working
+            # Overall health is healthy if database is working
             # We don't make the container unhealthy for modem, SIM or network issues
             status = 'healthy' if db_status == 'healthy' else 'unhealthy'
             
             response = {
-                'status': status,
+                'status': status,  # Container is healthy if DB works
                 'components': {
                     'database': {
                         'status': db_status
@@ -137,7 +137,7 @@ def register_health_check(app):
                 }
             }
             
-            return jsonify(response), 200
+            return jsonify(response), 200 if status == 'healthy' else 500
         except Exception as e:
             logger.error(f"Health check error: {str(e)}")
             return jsonify({
@@ -269,31 +269,45 @@ def change_password():
     
     return render_template('change_password.html')
 
-@admin_bp.route('/admin/templates', methods=['GET', 'POST'])
-@admin_required
+@admin_bp.route('/manage-templates', methods=['GET', 'POST'])
 def manage_templates():
+    """Manage SMS templates"""
     if request.method == 'POST':
         action = request.form.get('action')
         title = request.form.get('title')
         content = request.form.get('content')
         
+        if not title or not content:
+            return 'Missing required fields', 400
+            
         if action == 'add':
             if Template.create(title, content):
-                flash('Template added successfully', 'success')
-            else:
-                flash('Template title already exists', 'error')
+                return 'Template created', 200
+            return 'Failed to create template', 400
+            
         elif action == 'update':
             if Template.update(title, content):
-                flash('Template updated successfully', 'success')
-            else:
-                flash('Failed to update template', 'error')
+                return 'Template updated', 200
+            return 'Failed to update template', 400
+            
         elif action == 'delete':
+            if title == 'Default':
+                return 'Cannot delete default template', 400
             if Template.delete(title):
-                flash('Template deleted successfully', 'success')
-            else:
-                flash('Failed to delete template', 'error')
+                return 'Template deleted', 200
+            return 'Failed to delete template', 400
+            
+        return 'Invalid action', 400
     
+    # GET request - show templates
     templates = Template.get_all()
+    
+    # If no templates exist, create the default template
+    if not templates:
+        default_content = "Hi, this is XXXXXXX from COMPANY. Please do not reply to this message as it won't reach us. If you wish to contact us, please call 0123456789"
+        Template.create('Default', default_content)
+        templates = Template.get_all()
+    
     return render_template('manage_templates.html', templates=templates)
 
 @admin_bp.route('/admin/report')

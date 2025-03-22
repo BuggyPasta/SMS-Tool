@@ -15,6 +15,17 @@ def get_db():
     """Get database connection"""
     db = sqlite3.connect(Config.DATABASE)
     db.row_factory = sqlite3.Row
+    
+    # Add connection check method
+    def is_connected():
+        try:
+            db.execute('SELECT 1').fetchone()
+            return True
+        except sqlite3.Error:
+            return False
+    
+    # Attach the method to the connection object
+    db.is_connected = is_connected
     return db
 
 def init_db():
@@ -119,10 +130,32 @@ class User:
 class Template:
     @staticmethod
     def get_all():
+        """Get all templates, ensuring only one Default template exists"""
         db = get_db()
-        templates = db.execute('SELECT * FROM templates ORDER BY title').fetchall()
-        db.close()
-        return templates
+        try:
+            # First, ensure only one Default template exists
+            default_templates = db.execute('SELECT COUNT(*) as count FROM templates WHERE title = "Default"').fetchone()['count']
+            if default_templates > 1:
+                # Keep the most recently updated Default template
+                db.execute('''
+                    DELETE FROM templates 
+                    WHERE title = "Default" 
+                    AND id NOT IN (
+                        SELECT id FROM templates 
+                        WHERE title = "Default" 
+                        ORDER BY updated_at DESC 
+                        LIMIT 1
+                    )
+                ''')
+                db.commit()
+            
+            templates = db.execute('SELECT * FROM templates ORDER BY title').fetchall()
+            return templates
+        except Exception as e:
+            logger.error(f"Error getting templates: {str(e)}")
+            return []
+        finally:
+            db.close()
 
     @staticmethod
     def get_by_title(title):
@@ -133,13 +166,22 @@ class Template:
 
     @staticmethod
     def create(title, content):
+        """Create a new template, preventing duplicate titles"""
         db = get_db()
         try:
+            # Check if template with this title already exists
+            existing = db.execute('SELECT COUNT(*) as count FROM templates WHERE title = ?', (title,)).fetchone()['count']
+            if existing > 0:
+                return False
+            
             db.execute('INSERT INTO templates (title, content) VALUES (?, ?)',
                       (title, content))
             db.commit()
             return True
         except sqlite3.IntegrityError:
+            return False
+        except Exception as e:
+            logger.error(f"Error creating template: {str(e)}")
             return False
         finally:
             db.close()
@@ -186,25 +228,50 @@ class Message:
             db.close()
 
     @staticmethod
-    def get_all(limit=25, offset=0):
+    def get_all(page=1, per_page=25, phone_filter=None):
+        """Get all messages with pagination and optional phone filter"""
         db = get_db()
-        messages = db.execute('''
-            SELECT m.*, u.username as sender_name,
-                   CASE 
-                       WHEN m.status = 'queued' THEN m.queued_at
-                       WHEN m.status = 'sending' THEN m.sending_at
-                       WHEN m.status = 'sent' THEN m.sent_at
-                       WHEN m.status = 'delivered' THEN m.delivered_at
-                       WHEN m.status = 'failed' THEN m.failed_at
-                       ELSE m.created_at
-                   END as status_time
-            FROM messages m 
-            JOIN users u ON m.sender_id = u.id 
-            ORDER BY m.created_at DESC 
-            LIMIT ? OFFSET ?
-        ''', (limit, offset)).fetchall()
-        db.close()
-        return messages
+        offset = (page - 1) * per_page
+        try:
+            if phone_filter:
+                messages = db.execute('''
+                    SELECT m.*, u.username as sender_name,
+                           CASE 
+                               WHEN m.status = 'queued' THEN m.queued_at
+                               WHEN m.status = 'sending' THEN m.sending_at
+                               WHEN m.status = 'sent' THEN m.sent_at
+                               WHEN m.status = 'delivered' THEN m.delivered_at
+                               WHEN m.status = 'failed' THEN m.failed_at
+                               ELSE m.created_at
+                           END as status_time
+                    FROM messages m 
+                    JOIN users u ON m.sender_id = u.id 
+                    WHERE m.phone_number = ?
+                    ORDER BY m.created_at DESC 
+                    LIMIT ? OFFSET ?
+                ''', (phone_filter, per_page, offset)).fetchall()
+            else:
+                messages = db.execute('''
+                    SELECT m.*, u.username as sender_name,
+                           CASE 
+                               WHEN m.status = 'queued' THEN m.queued_at
+                               WHEN m.status = 'sending' THEN m.sending_at
+                               WHEN m.status = 'sent' THEN m.sent_at
+                               WHEN m.status = 'delivered' THEN m.delivered_at
+                               WHEN m.status = 'failed' THEN m.failed_at
+                               ELSE m.created_at
+                           END as status_time
+                    FROM messages m 
+                    JOIN users u ON m.sender_id = u.id 
+                    ORDER BY m.created_at DESC 
+                    LIMIT ? OFFSET ?
+                ''', (per_page, offset)).fetchall()
+            return messages
+        except Exception as e:
+            logger.error(f"Error getting messages: {str(e)}")
+            return []
+        finally:
+            db.close()
 
     @staticmethod
     def get_by_phone(phone_number, limit=25, offset=0):
@@ -275,4 +342,22 @@ class Message:
         except sqlite3.Error:
             return False
         finally:
-            db.close() 
+            db.close()
+
+    @classmethod
+    def get_total_pages(cls, per_page, phone_filter=None):
+        """Get total number of pages for pagination"""
+        db = get_db()
+        try:
+            if phone_filter:
+                count = db.execute(
+                    'SELECT COUNT(*) as total FROM messages WHERE phone_number = ?',
+                    (phone_filter,)
+                ).fetchone()['total']
+            else:
+                count = db.execute('SELECT COUNT(*) as total FROM messages').fetchone()['total']
+            
+            return (count + per_page - 1) // per_page  # Ceiling division
+        except Exception as e:
+            logger.error(f"Error getting total pages: {str(e)}")
+            return 1  # Return at least 1 page on error 

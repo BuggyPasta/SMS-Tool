@@ -170,6 +170,14 @@
     color: #dc3545;
 }
 
+.health-card.degraded .status-message {
+    color: #ffc107;
+}
+
+.health-card.degraded .health-icon img {
+    filter: invert(77%) sepia(38%) saturate(1000%) hue-rotate(360deg) brightness(100%) contrast(102%);
+}
+
 .header-actions {
     position: absolute;
     top: 1rem;
@@ -203,6 +211,7 @@
     gap: 2rem;
     margin: 2rem 0;
     padding: 1rem;
+    margin-bottom: 6rem;
 }
 
 .nav-button {
@@ -350,10 +359,10 @@ function updateHealth() {
             
             // Update Modem
             const modemCard = document.getElementById('modem-health');
-            const modemStatus = components.modem?.status || 'unhealthy';
+            const modemStatus = components.modem?.status || 'degraded';
             modemCard.className = `health-card ${modemStatus}`;
             modemCard.querySelector('.health-icon img').src = `/static/icons/${modemStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
-            modemCard.querySelector('.status-message').textContent = modemStatus === 'healthy' ? 'Connected' : 'Not Connected';
+            modemCard.querySelector('.status-message').textContent = modemStatus === 'healthy' ? 'Connected' : 'Limited';
             if (components.modem?.info) {
                 const info = [];
                 if (components.modem.info.signal) {
@@ -367,24 +376,24 @@ function updateHealth() {
             
             // Update SIM
             const simCard = document.getElementById('sim-health');
-            const simStatus = components.sim?.status || 'unhealthy';
+            const simStatus = components.sim?.status || 'degraded';
             simCard.className = `health-card ${simStatus}`;
             simCard.querySelector('.health-icon img').src = `/static/icons/${simStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
-            simCard.querySelector('.status-message').textContent = simStatus === 'healthy' ? 'Ready' : 'Not Ready';
+            simCard.querySelector('.status-message').textContent = simStatus === 'healthy' ? 'Ready' : 'Limited';
             
             // Update Network
             const networkCard = document.getElementById('network-health');
-            const networkStatus = components.network?.status || 'unhealthy';
+            const networkStatus = components.network?.status || 'degraded';
             networkCard.className = `health-card ${networkStatus}`;
             networkCard.querySelector('.health-icon img').src = `/static/icons/${networkStatus === 'healthy' ? 'working_ok.svg' : 'working_error.svg'}`;
-            networkCard.querySelector('.status-message').textContent = networkStatus === 'healthy' ? 'Connected' : 'Not Connected';
+            networkCard.querySelector('.status-message').textContent = networkStatus === 'healthy' ? 'Connected' : 'Limited';
         })
         .catch(error => {
             console.error('Health check failed:', error);
             document.querySelectorAll('.health-card').forEach(card => {
-                card.className = 'health-card unhealthy';
+                card.className = 'health-card degraded';
                 card.querySelector('.health-icon img').src = '/static/icons/working_error.svg';
-                card.querySelector('.status-message').textContent = 'Not Connected';
+                card.querySelector('.status-message').textContent = 'Limited';
                 const details = card.querySelector('.details');
                 if (details) details.innerHTML = '';
             });
