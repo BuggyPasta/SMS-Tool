@@ -70,6 +70,8 @@ def register_health_check(app):
     @app.route('/health')
     def health_check():
         """Check health of all system components"""
+        logger.info("Health check requested")
+        
         if not check_rate_limit():
             logger.warning("Rate limit exceeded for health check")
             return standardize_health_response(
@@ -86,6 +88,7 @@ def register_health_check(app):
         
         try:
             # Check database
+            logger.debug("Checking database health")
             db = get_db()
             db.execute('SELECT 1')
             components['database'] = {
@@ -93,6 +96,7 @@ def register_health_check(app):
                 'message': 'Database connection successful'
             }
             db.close()
+            logger.info("Database health check passed")
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
             components['database'] = {
@@ -103,7 +107,13 @@ def register_health_check(app):
 
         try:
             # Check modem status
-            if not gammu_service or not gammu_service.is_connected():
+            logger.debug("Checking modem health")
+            if not gammu_service:
+                logger.error("Gammu service not initialized")
+                raise ModemError("Modem service not initialized", ErrorCode.MODEM_NOT_CONNECTED)
+            
+            if not gammu_service.is_connected():
+                logger.error("Modem not connected")
                 raise ModemError("Modem is not connected", ErrorCode.MODEM_NOT_CONNECTED)
                 
             # Get modem info
@@ -112,20 +122,25 @@ def register_health_check(app):
                 'status': 'healthy',
                 'info': modem_info
             }
+            logger.info("Modem health check passed")
             
             # Get SIM status
+            logger.debug("Checking SIM health")
             sim_info = gammu_service.get_sim_status()
             components['sim'] = {
                 'status': 'healthy',
                 'info': sim_info
             }
+            logger.info("SIM health check passed")
             
             # Get network status
+            logger.debug("Checking network health")
             network_info = gammu_service.get_network_status()
             components['network'] = {
                 'status': 'healthy',
                 'info': network_info
             }
+            logger.info("Network health check passed")
             
         except ModemError as e:
             logger.error(f"Modem health check failed: {e}")
@@ -159,6 +174,7 @@ def register_health_check(app):
                 f"Unexpected error: {str(e)}"
             )
 
+        logger.info("All health checks passed")
         return standardize_health_response('healthy', components)
 
 def login_required(f):

@@ -42,7 +42,9 @@ exec gunicorn --bind 0.0.0.0:4001 \
     --workers 1 \
     --timeout 120 \
     --pid /app/flask.pid \
-    --log-level info \
+    --log-level debug \
     --access-logfile /app/logs/access.log \
     --error-logfile /app/logs/error.log \
+    --capture-output \
+    --enable-stdio-inheritance \
     'app:create_app()' 
