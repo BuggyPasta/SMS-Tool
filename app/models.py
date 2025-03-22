@@ -38,18 +38,6 @@ def init_db():
             db.executescript(f.read())
         db.commit()
         
-        # Ensure proper permissions
-        try:
-            import pwd
-            import grp
-            gammu_uid = pwd.getpwnam('gammuuser').pw_uid
-            dialout_gid = grp.getgrnam('dialout').gr_gid
-            os.chown(Config.DATABASE, gammu_uid, dialout_gid)
-            os.chmod(Config.DATABASE, 0o660)  # rw-rw----
-            logger.info("Database permissions set successfully")
-        except Exception as e:
-            logger.warning(f"Could not set database permissions: {e}")
-        
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")

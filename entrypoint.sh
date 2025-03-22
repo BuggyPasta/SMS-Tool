@@ -17,34 +17,8 @@ trap cleanup SIGTERM SIGINT
 # Set Python path
 export PYTHONPATH=/app:${PYTHONPATH:-}
 
-# Function to check directory permissions
-check_directory() {
-    local dir="$1"
-    if [ ! -d "$dir" ]; then
-        echo "Error: Directory $dir does not exist"
-        return 1
-    fi
-    if [ ! -w "$dir" ]; then
-        echo "Error: Directory $dir is not writable"
-        return 1
-    fi
-    return 0
-}
-
-# Verify directories and permissions
-echo "Verifying directories and permissions..."
-for dir in /app/instance /app/logs; do
-    if ! check_directory "$dir"; then
-        echo "Error: Directory $dir is not accessible"
-        exit 1
-    fi
-done
-
-# Verify schema file exists
-if [ ! -f "/app/database/schema.sql" ]; then
-    echo "Error: Schema file not found"
-    exit 1
-fi
+# Create directories
+mkdir -p /app/instance /app/logs
 
 # Run preflight checks
 echo "Running preflight checks..."

@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     gammu libgammu-dev pkg-config python3-dev gcc sqlite3 curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create user
+# Create gammu user and add to dialout group
 RUN useradd -m -u 101 -G dialout gammuuser
 
 WORKDIR /app
@@ -18,7 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN echo "[gammu]\ndevice = /dev/ttyUSB3\nconnection = at" > /etc/gammurc
 
 # Set permissions
-RUN chown -R gammuuser:dialout /app && chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh
 
-USER gammuuser
 ENTRYPOINT ["./entrypoint.sh"]

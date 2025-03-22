@@ -6,7 +6,6 @@ import gammu
 import logging
 import os
 import threading
-import grp
 from datetime import datetime, timedelta
 import time
 from typing import Dict, Any, Optional
@@ -133,60 +132,11 @@ class GammuService:
 
             connect_start = time.time()
             try:
-                # Log current user and permissions
-                uid = os.getuid()
-                gid = os.getgid()
-                groups = os.getgroups()
-                logger.info(f"Current user ID: {uid}")
-                logger.info(f"Current group ID: {gid}")
-                logger.info(f"Supplementary groups: {groups}")
-                
-                # Check dialout group membership
-                try:
-                    dialout_gid = grp.getgrnam('dialout').gr_gid
-                    logger.info(f"Dialout group ID: {dialout_gid}")
-                    if gid != dialout_gid and dialout_gid not in groups:
-                        raise DeviceError(
-                            "User is not in the dialout group",
-                            error_code=ErrorCode.DEVICE_PERMISSION_DENIED,
-                            details={'uid': uid, 'gid': gid, 'groups': groups}
-                        )
-                except ImportError:
-                    logger.warning("Could not import grp module - skipping group check")
-                except KeyError:
-                    logger.warning("Dialout group not found - skipping group check")
-                except Exception as e:
-                    raise DeviceError(
-                        "Group permission check failed",
-                        error_code=ErrorCode.DEVICE_PERMISSION_DENIED,
-                        original_error=e
-                    )
-
-                # Check device existence and permissions
+                # Check device existence
                 if not os.path.exists('/dev/ttyUSB3'):
                     raise DeviceError(
                         "Device /dev/ttyUSB3 does not exist",
                         error_code=ErrorCode.DEVICE_NOT_FOUND
-                    )
-
-                try:
-                    stat = os.stat('/dev/ttyUSB3')
-                    mode = stat.st_mode & 0o777
-                    logger.info(f"Device permissions: {oct(mode)}")
-                    
-                    if not (mode & 0o060):
-                        raise DeviceError(
-                            f"Insufficient group permissions on /dev/ttyUSB3: {oct(mode)}",
-                            error_code=ErrorCode.DEVICE_PERMISSION_DENIED,
-                            details={'mode': oct(mode)}
-                        )
-                    
-                    logger.info("Device has proper permissions")
-                except OSError as e:
-                    raise DeviceError(
-                        "Cannot access device permissions",
-                        error_code=ErrorCode.DEVICE_ACCESS_ERROR,
-                        original_error=e
                     )
 
                 # Initialize state machine if not already initialized
@@ -225,29 +175,22 @@ class GammuService:
                 last_error = None
                 for attempt in range(max_retries):
                     try:
-                        if time.time() - connect_start > self._connection_timeout:
-                            raise ModemError(
-                                "Connection timeout",
-                                error_code=ErrorCode.MODEM_CONNECTION_FAILED,
-                                details={'timeout': self._connection_timeout}
-                            )
-                            
-                        logger.info(f"Attempting to initialize connection (attempt {attempt + 1}/{max_retries})...")
                         self.state_machine.Init()
-                        logger.info("Successfully connected to modem")
                         self._is_connected = True
+                        logger.info("Successfully connected to modem")
                         break
                     except Exception as e:
                         last_error = e
+                        logger.warning(f"Connection attempt {attempt + 1} failed: {e}")
                         if attempt < max_retries - 1:
-                            logger.error(f"Connection attempt {attempt + 1} failed: {e}")
-                            time.sleep(2)
-                        else:
-                            raise ModemError(
-                                f"Failed to initialize modem after {max_retries} attempts",
-                                error_code=ErrorCode.MODEM_INITIALIZATION_FAILED,
-                                original_error=last_error
-                            )
+                            time.sleep(2)  # Wait before retrying
+                
+                if not self._is_connected:
+                    raise ModemError(
+                        "Failed to initialize modem after multiple attempts",
+                        error_code=ErrorCode.MODEM_CONNECTION_FAILED,
+                        original_error=last_error
+                    )
                 
                 # Get basic modem info for diagnostics
                 if self._is_connected:

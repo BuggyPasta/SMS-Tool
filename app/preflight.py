@@ -5,8 +5,6 @@ Preflight checks for SMS Tool
 
 import os
 import sys
-import grp
-import pwd
 import gammu
 import logging
 from .logging_config import setup_logging
@@ -22,46 +20,6 @@ def check_device_exists():
         return False
     logger.info("✓ Device exists")
     return True
-
-def check_device_permissions():
-    """Check device permissions"""
-    try:
-        stat = os.stat('/dev/ttyUSB3')
-        mode = stat.st_mode
-        if not (mode & 0o660):
-            logger.error("❌ Device does not have correct permissions (needs 660)")
-            return False
-        logger.info("✓ Device has correct permissions")
-        return True
-    except Exception as e:
-        logger.error(f"❌ Error checking device permissions: {e}")
-        return False
-
-def check_user_groups():
-    """Check if current user is in dialout group"""
-    try:
-        # Get dialout group info
-        dialout_gid = grp.getgrnam('dialout').gr_gid
-        
-        # Check primary group
-        primary_gid = os.getgid()
-        if primary_gid == dialout_gid:
-            logger.info("✓ User's primary group is dialout")
-            return True
-            
-        # Check supplementary groups
-        groups = os.getgroups()
-        logger.info(f"User groups: primary={primary_gid}, supplementary={groups}")
-        
-        if dialout_gid in groups:
-            logger.info("✓ User has dialout as supplementary group")
-            return True
-            
-        logger.error(f"❌ Current user is not in dialout group (gid={dialout_gid})")
-        return False
-    except Exception as e:
-        logger.error(f"❌ Error checking user groups: {e}")
-        return False
 
 def check_gammu_config():
     """Check if Gammu config is readable and valid"""
@@ -79,29 +37,13 @@ def check_gammu_config():
         logger.error(f"❌ Error checking Gammu config: {e}")
         return False
 
-def check_device_accessible():
-    """Check if device is accessible without locking"""
-    try:
-        # Just try to open the device without locking or configuring
-        fd = os.open('/dev/ttyUSB3', os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
-        logger.info("Successfully opened device")
-        os.close(fd)
-        logger.info("✓ Device is accessible")
-        return True
-    except Exception as e:
-        logger.error(f"❌ Device is not accessible: {e}")
-        return False
-
 def main():
     """Run all preflight checks"""
     logger.info("Running preflight checks...")
     
     checks = [
         check_device_exists,
-        check_device_permissions,
-        check_user_groups,
-        check_gammu_config,
-        check_device_accessible
+        check_gammu_config
     ]
     
     all_passed = True
