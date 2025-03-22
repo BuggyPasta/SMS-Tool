@@ -1,36 +1,115 @@
 import sqlite3
 from flask import g, current_app
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_db():
+    """Get database connection"""
     if 'db' not in g:
-        g.db = sqlite3.connect(
-            current_app.config['DATABASE'],
-            detect_types=sqlite3.PARSE_DECLTYPES
-        )
-        g.db.row_factory = sqlite3.Row
+        try:
+            g.db = sqlite3.connect(
+                current_app.config['DATABASE'],
+                detect_types=sqlite3.PARSE_DECLTYPES
+            )
+            g.db.row_factory = sqlite3.Row
+            
+            # Add connection check method to the connection object
+            def _is_connected(conn):
+                try:
+                    conn.execute('SELECT 1').fetchone()
+                    return True
+                except sqlite3.Error as e:
+                    logger.error(f"Database connection check failed: {str(e)}")
+                    return False
+            
+            # Attach the method to the connection object
+            g.db.is_connected = lambda: _is_connected(g.db)
+            
+        except sqlite3.Error as e:
+            logger.error(f"Failed to establish database connection: {str(e)}")
+            raise
     return g.db
 
 def close_db(e=None):
+    """Close database connection"""
     db = g.pop('db', None)
     if db is not None:
-        db.close()
+        try:
+            db.close()
+        except sqlite3.Error as e:
+            logger.error(f"Error closing database connection: {str(e)}")
 
 def init_db():
-    db = get_db()
-    with current_app.open_resource('database/schema.sql') as f:
-        db.executescript(f.read().decode('utf8'))
+    """Initialize the database"""
+    db = None
+    try:
+        # Get absolute path to schema file
+        schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'schema.sql')
+        if not os.path.exists(schema_path):
+            logger.error(f"Schema file not found at {schema_path}")
+            return False
+
+        # Ensure database directory exists
+        db_dir = os.path.dirname(current_app.config['DATABASE'])
+        os.makedirs(db_dir, exist_ok=True)
+
+        # Get database connection
+        db = get_db()
+        
+        # Read and execute schema
+        with current_app.open_resource('database/schema.sql') as f:
+            db.executescript(f.read().decode('utf8'))
+        db.commit()
+        
+        # Verify database was initialized correctly
+        try:
+            # Check if users table exists and has admin user
+            admin = db.execute('SELECT * FROM users WHERE username = ?', ('admin',)).fetchone()
+            if not admin:
+                logger.error("Database initialization failed: admin user not created")
+                return False
+                
+            # Check if templates table exists and has default template
+            default_template = db.execute('SELECT * FROM templates WHERE title = ?', ('Default',)).fetchone()
+            if not default_template:
+                logger.error("Database initialization failed: default template not created")
+                return False
+                
+            logger.info("Database initialization verified successfully")
+            return True
+        except sqlite3.Error as e:
+            logger.error(f"Database verification failed: {str(e)}")
+            return False
+    except Exception as e:
+        logger.error(f"Database initialization failed: {str(e)}")
+        return False
+    finally:
+        if db:
+            try:
+                db.close()
+            except Exception as e:
+                logger.error(f"Error closing database connection: {str(e)}")
 
 def is_connected():
+    """Check if database is connected"""
     try:
         db = get_db()
-        db.execute('SELECT 1').fetchone()
-        return True
-    except sqlite3.Error:
+        return db.is_connected()
+    except Exception as e:
+        logger.error(f"Database connection check failed: {str(e)}")
         return False
 
 def init_app(app):
+    """Initialize the database in the app context"""
     app.teardown_appcontext(close_db)
-    with app.app_context():
-        if not os.path.exists(app.config['DATABASE']):
-            init_db() 
+    try:
+        with app.app_context():
+            if not os.path.exists(app.config['DATABASE']):
+                if not init_db():
+                    logger.error("Failed to initialize database")
+                    raise Exception("Database initialization failed")
+    except Exception as e:
+        logger.error(f"Failed to initialize app database: {str(e)}")
+        raise 

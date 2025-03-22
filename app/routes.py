@@ -4,7 +4,8 @@ Application routes
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from functools import wraps
-from .models import User, Template, Message, get_db
+from .models import User, Template, Message
+from .database import get_db, is_connected
 from .services.gammu_service import GammuService
 from .exceptions import GammuError, ModemError, SIMError, NetworkError, ErrorCode
 import re
@@ -73,7 +74,7 @@ def register_health_check(app):
         try:
             # Check database
             try:
-                db_status = 'healthy' if get_db().is_connected() else 'unhealthy'
+                db_status = 'healthy' if is_connected() else 'unhealthy'
             except Exception as e:
                 logger.error(f"Database health check failed: {str(e)}")
                 db_status = 'unhealthy'
@@ -117,7 +118,7 @@ def register_health_check(app):
             status = 'healthy' if db_status == 'healthy' else 'unhealthy'
             
             response = {
-                'status': status,  # Container is healthy if DB works
+                'status': status,
                 'components': {
                     'database': {
                         'status': db_status
