@@ -90,7 +90,7 @@ def register_health_check(app):
                 if modem_info:
                     modem_info = {
                         'signal': modem_info.get('signal', {}).get('SignalPercent'),
-                        'model': modem_info.get('model', '').split(',')[-1].strip()  # Get only the last part of model
+                        'model': modem_info.get('model', '')  # Don't split the model string
                     }
             except Exception as e:
                 logger.error(f"Modem health check failed: {str(e)}")
@@ -105,15 +105,6 @@ def register_health_check(app):
                 logger.error(f"SIM health check failed: {str(e)}")
                 sim_status = 'degraded'
                 sim_info = None
-            
-            # Check network
-            try:
-                network_info = gammu_service.get_network_info()
-                network_status = 'healthy' if network_info and network_info.get('status') == 'connected' else 'degraded'
-            except Exception as e:
-                logger.error(f"Network health check failed: {str(e)}")
-                network_status = 'degraded'
-                network_info = None
             
             # Overall health is healthy if database is working
             # We don't make the container unhealthy for modem, SIM or network issues
@@ -132,10 +123,6 @@ def register_health_check(app):
                     'sim': {
                         'status': sim_status,
                         'info': sim_info
-                    },
-                    'network': {
-                        'status': network_status,
-                        'info': network_info
                     }
                 }
             }
