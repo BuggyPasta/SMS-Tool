@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="manage-templates">
+    <h1>Manage SMS Templates</h1>
+
+    <div id="templates-container">
+        {% for template in templates %}
+        <div class="template-card">
+            <div class="template-field">
+                <label>Template Name:</label>
+                <input type="text" class="template-name" value="{{ template.title }}" {% if template.title == 'Default' %}readonly{% endif %}>
+            </div>
+            <div class="template-field">
+                <label>Template Content:</label>
+                <textarea class="template-content" maxlength="160">{{ template.content }}</textarea>
+                <div class="char-counter"><span class="current-chars">{{ template.content|length }}</span>/160</div>
+            </div>
+            <div class="template-actions">
+                <button class="action-button save-button" onclick="saveTemplate(this)">
+                    <img src="{{ url_for('static', filename='icons/icon_ok.svg') }}" alt="Save">
+                    <span>Save Changes</span>
+                </button>
+                {% if template.title != 'Default' %}
+                <button class="action-button delete-button" onclick="deleteTemplate(this)">
+                    <img src="{{ url_for('static', filename='icons/icon_x.svg') }}" alt="Delete">
+                    <span>Delete this Template</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="new-template-container"></div>
+
+    <div class="nav-buttons">
+        <button onclick="addNewTemplate()" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/sms_add.svg') }}" alt="Add Template">
+            <span>Add New Template</span>
+        </button>
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Home">
+            <span>Back to Home Page</span>
+        </a>
+    </div>
+</div>
+
+<style>
+.manage-templates {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.manage-templates h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.template-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.template-field {
+    margin-bottom: 1.5rem;
+}
+
+.template-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.template-name {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.template-name[readonly] {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.template-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    min-height: 100px;
+    resize: vertical;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.template-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 36px;
+}
+
+.save-button {
+    background: #28a745;
+    color: white;
+}
+
+.save-button:hover {
+    background: #218838;
+}
+
+.delete-button {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-button:hover {
+    background: #c82333;
+}
+
+.action-button img {
+    width: 16px;
+    height: 16px;
+}
+
+.nav-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin: 4rem 0;
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #fff;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.nav-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+}
+
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Dark mode styles */
+body.dark-mode .manage-templates h1 {
+    color: #f8f9fa;
+}
+
+body.dark-mode .template-card {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .template-name,
+body.dark-mode .template-content {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #f8f9fa;
+}
+
+body.dark-mode .template-name[readonly] {
+    background: #252525;
+}
+
+body.dark-mode .char-counter {
+    color: #aaa;
+}
+
+body.dark-mode .nav-button {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .manage-templates {
+        padding: 1rem;
+    }
+
+    .template-actions,
+    .nav-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .action-button {
+        height: 48px;
+        font-size: 1rem;
+    }
+
+    .action-button img {
+        width: 24px;
+        height: 24px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add character counter to all template content fields
+    document.querySelectorAll('.template-content').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const counter = this.parentElement.querySelector('.current-chars');
+            counter.textContent = this.value.length;
+        });
+    });
+});
+
+function addNewTemplate() {
+    const container = document.getElementById('new-template-container');
+    const templateHtml = `
+        <div class="template-card">
+            <div class="template-field">
+                <label>Template Name:</label>
+                <input type="text" class="template-name" required>
+            </div>
+            <div class="template-field">
+                <label>Template Content:</label>
+                <textarea class="template-content" maxlength="160" required></textarea>
+                <div class="char-counter"><span class="current-chars">0</span>/160</div>
+            </div>
+            <div class="template-actions">
+                <button class="action-button save-button" onclick="saveNewTemplate(this)">
+                    <img src="{{ url_for('static', filename='icons/icon_ok.svg') }}" alt="Save">
+                    <span>Save Changes</span>
+                </button>
+                <button class="action-button delete-button" onclick="this.closest('.template-card').remove()">
+                    <img src="{{ url_for('static', filename='icons/icon_x.svg') }}" alt="Delete">
+                    <span>Delete this Template</span>
+                </button>
+            </div>
+        </div>
+    `;
+    container.innerHTML = templateHtml;
+    
+    // Add character counter to new template
+    const newTextarea = container.querySelector('.template-content');
+    newTextarea.addEventListener('input', function() {
+        const counter = this.parentElement.querySelector('.current-chars');
+        counter.textContent = this.value.length;
+    });
+}
+
+function saveTemplate(button) {
+    const card = button.closest('.template-card');
+    const title = card.querySelector('.template-name').value;
+    const content = card.querySelector('.template-content').value;
+    
+    fetch("{{ url_for('admin.manage_templates') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'action': 'update',
+            'title': title,
+            'content': content
+        })
+    }).then(response => {
+        if (response.ok) {
+            showMessage('Changes saved successfully', 'success');
+        } else {
+            showMessage('Error saving changes', 'error');
+        }
+    });
+}
+
+function saveNewTemplate(button) {
+    const card = button.closest('.template-card');
+    const title = card.querySelector('.template-name').value;
+    const content = card.querySelector('.template-content').value;
+    
+    if (!title || !content) {
+        showMessage('Please fill in both template name and content', 'error');
+        return;
+    }
+    
+    fetch("{{ url_for('admin.manage_templates') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'action': 'add',
+            'title': title,
+            'content': content
+        })
+    }).then(response => {
+        if (response.ok) {
+            showMessage('Template created successfully', 'success');
+            window.location.reload();
+        } else {
+            showMessage('Error creating template', 'error');
+        }
+    });
+}
+
+function deleteTemplate(button) {
+    if (!confirm('Are you sure you want to delete this template?')) {
+        return;
+    }
+    
+    const card = button.closest('.template-card');
+    const title = card.querySelector('.template-name').value;
+    
+    fetch("{{ url_for('admin.manage_templates') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'action': 'delete',
+            'title': title
+        })
+    }).then(response => {
+        if (response.ok) {
+            showMessage('Template deleted successfully', 'success');
+            window.location.reload();
+        } else {
+            showMessage('Error deleting template', 'error');
+        }
+    });
+}
+
+function showMessage(message, type) {
+    const flash = document.createElement('div');
+    flash.className = `alert alert-${type}`;
+    flash.textContent = message;
+    document.querySelector('.manage-templates').insertBefore(flash, document.querySelector('#templates-container'));
+    setTimeout(() => flash.remove(), 3000);
+}
+</script>
+{% endblock %} 

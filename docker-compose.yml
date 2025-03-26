@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  sms-tool:
+    build:
+      context: https://github.com/BuggyPasta/SMS-Tool.git
+      dockerfile: Dockerfile
+    container_name: sms-tool
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "4001:4001"
+    volumes:
+      - ${BASE_PATH}/instance:/app/instance:rw  # DO NOT CHANGE THIS PATH - Set BASE_PATH in .env file instead
+      - ${BASE_PATH}/logs:/app/logs:rw  # DO NOT CHANGE THIS PATH - Set BASE_PATH in .env file instead
+      - /etc/gammurc:/etc/gammurc:ro  # Host's Gammu configuration
+      - /dev:/dev:rw
+    group_add:
+      - dialout
+      - tty
+    environment:
+      - FLASK_APP=app
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - TZ=${TZ:-Europe/London}
+      - DATABASE_PATH=${DATABASE_PATH}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - GAMMU_CONFIG=${GAMMU_CONFIG:-/etc/gammurc}
+      - PYTHONUNBUFFERED=1
+      - USB_DEVICE=/dev/ttyUSB3
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=4001
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:4001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    cap_add:
+      - SYS_ADMIN
+      - MKNOD
+    security_opt:
+      - seccomp:unconfined
+    stop_grace_period: 30s
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"

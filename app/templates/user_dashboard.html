@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="user-dashboard">
+    <div class="dashboard-header">
+        <h1>SMS Sending Form</h1>
+    </div>
+
+    <div class="sms-form">
+        <form action="{{ url_for('user.send_sms') }}" method="post">
+            <div class="form-group">
+                <label for="template">Select Template:</label>
+                <select id="template" name="template" onchange="loadTemplate()">
+                    <option value="">-- Select a template --</option>
+                    {% for template in templates %}
+                    <option value="{{ template.title }}">{{ template.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="phone_number">Phone Number:</label>
+                <input type="text" id="phone_number" name="phone_number" required pattern="07[0-9]{9}" placeholder="07XXXXXXXXX">
+            </div>
+
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" required maxlength="160"></textarea>
+                <div class="char-counter"><span id="char-count">0</span>/160</div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="send-button">
+                    <img src="{{ url_for('static', filename='icons/icon_sms.svg') }}" alt="Send">
+                    <span>Send this message now</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="nav-buttons">
+        <a href="{{ url_for('auth.logout') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+            <span>Log Out</span>
+        </a>
+    </div>
+</div>
+
+<style>
+.user-dashboard {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.sms-form {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.form-group input[type="tel"] {
+    text-align: center;
+}
+
+.form-button img {
+    width: 48px;
+    height: 48px;
+}
+
+.send-button img {
+    width: 48px;
+    height: 48px;
+}
+
+.clear-button img {
+    width: 48px;
+    height: 48px;
+}
+
+.send-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1.5rem;
+    border: none;
+    border-radius: 8px;
+    background: #28a745;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 1rem 0;
+}
+
+.send-button:hover {
+    background: #218838;
+}
+
+.send-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.75rem;
+    margin-right: 0;
+}
+
+.nav-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0 4rem;
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+}
+
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.nav-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.75rem;
+}
+
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1.2rem;
+    box-sizing: border-box;
+    text-align-last: center;
+    cursor: pointer;
+}
+
+.form-group select option {
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Dark mode styles */
+body.dark-mode .sms-form {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .form-group label {
+    color: #e0e0e0;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea {
+    background: #2d2d2d;
+    border-color: #4d4d4d;
+    color: #e0e0e0;
+}
+
+body.dark-mode .char-counter {
+    color: #aaa;
+}
+
+body.dark-mode .nav-button {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .form-group select {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #f8f9fa;
+}
+
+body.dark-mode .form-group select option {
+    background: #1a1a1a;
+    color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .user-dashboard {
+        padding: 1rem;
+    }
+
+    .nav-buttons {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .nav-button {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageTextarea = document.getElementById('message');
+    const charCount = document.getElementById('char-count');
+
+    messageTextarea.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+    });
+});
+
+function loadTemplate() {
+    const select = document.getElementById('template');
+    const title = select.value;
+    
+    if (!title) {
+        document.getElementById('message').value = '';
+        document.getElementById('char-count').textContent = '0';
+        return;
+    }
+    
+    fetch(`{{ url_for('user.get_template', title='') }}${title}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.content) {
+                const textarea = document.getElementById('message');
+                textarea.value = data.content;
+                document.getElementById('char-count').textContent = data.content.length;
+            }
+        });
+}
+
+function resetForm() {
+    document.getElementById('template').value = '';
+    document.getElementById('phone_number').value = '';
+    document.getElementById('message').value = '';
+    document.getElementById('char-count').textContent = '0';
+}
+</script>
+{% endblock %} 

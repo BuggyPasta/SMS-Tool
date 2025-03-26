@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS-Tool Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <img src="{{ url_for('static', filename='icons/app_logo.svg') }}" alt="SMS-Tool Logo" class="login-logo">
+            <form method="POST" class="login-form">
+                <div class="form-group">
+                    <input type="text" id="username" name="username" placeholder="User Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="login-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 400px;
+        padding: 2rem;
+    }
+
+    .login-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .login-logo {
+        width: 120px;
+        height: auto;
+        margin-bottom: 2rem;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-group {
+        text-align: left;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1.2rem;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+
+    .login-button {
+        width: 100%;
+        padding: 0.75rem;
+        background: #2CA9BC;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1.2rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .login-button:hover {
+        background: #2591A1;
+    }
+
+    /* Flash messages */
+    .flash-message {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .flash-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .flash-message.warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+
+    .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    </style>
+</body>
+</html> 

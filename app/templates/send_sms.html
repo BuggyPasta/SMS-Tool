@@ -1,0 +1,10 @@
+<!-- Send SMS page --> 
+<div class="form-group">
+    <label for="template">Choose a message template:</label>
+    <select id="template" name="template" class="form-control" onchange="updateMessageFromTemplate(this.value)">
+        <option value="">Select a template...</option>
+        {% for template in templates %}
+        <option value="{{ template.title }}" data-content="{{ template.content }}">{{ template.title }} - {{ template.content[:50] }}...</option>
+        {% endfor %}
+    </select>
+</div> 

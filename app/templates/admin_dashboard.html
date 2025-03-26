@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+    </div>
+
+    <div class="health-section">
+        <h2>System Health</h2>
+        <div class="health-grid">
+            <div id="database-health" class="health-card">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
+                </div>
+                <div class="health-info">
+                    <h3>Database</h3>
+                    <div class="status-message">Checking...</div>
+                </div>
+            </div>
+            
+            <div id="modem-health" class="health-card">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
+                </div>
+                <div class="health-info">
+                    <h3>Modem</h3>
+                    <div class="status-message">Checking...</div>
+                    <div class="details"></div>
+                </div>
+            </div>
+            
+            <div id="sim-health" class="health-card">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
+                </div>
+                <div class="health-info">
+                    <h3>SIM Card</h3>
+                    <div class="status-message">Checking...</div>
+                </div>
+            </div>
+            
+            <div id="network-health" class="health-card">
+                <div class="health-icon">
+                    <img src="{{ url_for('static', filename='icons/working_ok.svg') }}" alt="Status">
+                </div>
+                <div class="health-info">
+                    <h3>Network</h3>
+                    <div class="status-message">Checking...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h2>Management</h2>
+        <div class="nav-grid">
+            <a href="{{ url_for('admin.manage_users') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/user.svg') }}" alt="Manage Users">
+                <span>Manage Users</span>
+            </a>
+            <a href="{{ url_for('admin.manage_templates') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/sms_edit.svg') }}" alt="Manage SMS Templates">
+                <span>Manage SMS Templates</span>
+            </a>
+            <a href="{{ url_for('admin.sms_report') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/report.svg') }}" alt="Show SMS Report">
+                <span>Show SMS Report</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-button">
+                <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Exit App">
+                <span>Exit App</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: inherit;
+}
+
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.health-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.health-icon {
+    width: 24px;
+    height: 24px;
+    padding: 0.5rem;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.health-icon img {
+    width: 24px;
+    height: 24px;
+}
+
+.health-info {
+    flex: 1;
+}
+
+.health-info h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.status-message {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.details {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+}
+
+.health-card.healthy .status-message {
+    color: #28a745;
+}
+
+.health-card.unhealthy .status-message,
+.health-card.degraded .status-message {
+    color: #dc3545;
+}
+
+.health-card.degraded .status-message {
+    color: #ffc107;
+}
+
+.health-card.degraded .health-icon img {
+    filter: invert(77%) sepia(38%) saturate(1000%) hue-rotate(360deg) brightness(100%) contrast(102%);
+}
+
+.dashboard-section {
+    margin-bottom: 4rem;
+}
+
+.dashboard-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: inherit;
+}
+
+.nav-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .nav-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-dashboard {
+        padding: 1rem;
+    }
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    min-height: 180px;
+}
+
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.nav-button img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.75rem;
+}
+
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Dark mode styles */
+body.dark-mode .nav-button {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .dashboard-header h1,
+body.dark-mode .dashboard-section h2 {
+    color: #f8f9fa;
+}
+
+body.dark-mode .health-card {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .health-icon {
+    background: #1a1a1a;
+}
+
+body.dark-mode .health-info h3 {
+    color: #f8f9fa;
+}
+
+body.dark-mode .details {
+    color: #aaa;
+}
+</style>
+
+<script>
+function updateHealthStatus() {
+    fetch('/health')
+        .then(response => response.json())
+        .then(data => {
+            // Update database status
+            const dbCard = document.getElementById('database-health');
+            const dbStatus = data.components.database.status;
+            dbCard.className = `health-card ${dbStatus}`;
+            dbCard.querySelector('.status-message').textContent = dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1);
+
+            // Update modem status
+            const modemCard = document.getElementById('modem-health');
+            const modemStatus = data.components.modem.status;
+            const modemInfo = data.components.modem.info;
+            modemCard.className = `health-card ${modemStatus}`;
+            modemCard.querySelector('.status-message').textContent = modemStatus.charAt(0).toUpperCase() + modemStatus.slice(1);
+            
+            if (modemInfo) {
+                const details = [];
+                if (modemInfo.signal) {
+                    details.push(`Signal: ${modemInfo.signal}%`);
+                }
+                if (modemInfo.model) {
+                    details.push(`Model: ${modemInfo.model}`);
+                }
+                modemCard.querySelector('.details').textContent = details.join('\n');
+            }
+
+            // Update SIM status
+            const simCard = document.getElementById('sim-health');
+            const simStatus = data.components.sim.status;
+            simCard.className = `health-card ${simStatus}`;
+            simCard.querySelector('.status-message').textContent = simStatus.charAt(0).toUpperCase() + simStatus.slice(1);
+
+            // Update network status
+            const networkCard = document.getElementById('network-health');
+            const networkStatus = data.components.network ? data.components.network.status : 'degraded';
+            networkCard.className = `health-card ${networkStatus}`;
+            networkCard.querySelector('.status-message').textContent = networkStatus.charAt(0).toUpperCase() + networkStatus.slice(1);
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Update health status every 30 seconds
+updateHealthStatus();
+setInterval(updateHealthStatus, 30000);
+</script>
+{% endblock %} 

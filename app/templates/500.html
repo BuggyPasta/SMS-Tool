@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <h1>500 - Internal Server Error</h1>
+    <p>Something went wrong on our end. Please try again later.</p>
+    <a href="{{ url_for('auth.login') }}" class="pure-button pure-button-primary">
+        <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Home">
+        <span>Return to Home</span>
+    </a>
+</div>
+{% endblock %} 

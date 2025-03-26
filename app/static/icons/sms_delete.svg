@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" xml:space="preserve">
+  <style type="text/css">
+    .st0{fill:none;stroke:#CC0000;stroke-width:100;stroke-linecap:round;stroke-linejoin:round;}
+    .st1{fill:none;stroke:#CC0000;stroke-width:75;stroke-linecap:round;stroke-linejoin:round;}
+  </style>
+  <path class="st0" d="M227.2,227.2l345.5,345.5 M227.2,572.8l345.5-345.5"/>
+  <path class="st1" d="M125.4,47h549.1c43.3,0,78.4,35.1,78.4,78.4v549.1c0,43.3-35.1,78.4-78.4,78.4H125.4C82.1,753,47,717.9,47,674.6V125.4C47,82.1,82.1,47,125.4,47z"/>
+</svg>

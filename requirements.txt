@@ -1,0 +1,7 @@
+# Python dependencies 
+Flask==3.0.2
+SQLAlchemy==2.0.28
+python-gammu==3.2
+Werkzeug>=3.0.0
+pytz==2023.3
+gunicorn==21.2.0 

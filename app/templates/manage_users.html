@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="manage-users">
+    <h1>Manage Users</h1>
+    <div class="nav-grid">
+        <a href="{{ url_for('admin.add_user') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/user_register.svg') }}" alt="Add User">
+            <span>Add User</span>
+        </a>
+        <a href="{{ url_for('admin.delete_user') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/user_delete.svg') }}" alt="Delete User">
+            <span>Delete User</span>
+        </a>
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Back to Home Page">
+            <span>Back to Home Page</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-button">
+            <img src="{{ url_for('static', filename='icons/exit.svg') }}" alt="Log Out">
+            <span>Log Out</span>
+        </a>
+    </div>
+</div>
+
+<style>
+.manage-users {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.manage-users h1 {
+    text-align: center;
+    margin-bottom: 3rem;
+    color: inherit;
+    font-size: 2rem;
+}
+
+.nav-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+@media (max-width: 768px) {
+    .nav-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    height: auto;
+}
+
+.nav-button img {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 0.75rem;
+}
+
+.nav-button span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.nav-button:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Dark mode styles */
+body.dark-mode .nav-button {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .manage-users h1 {
+    color: #f8f9fa;
+}
+</style>
+{% endblock %} 

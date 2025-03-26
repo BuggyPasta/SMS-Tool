@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="delete-user">
+    <h2>Delete User</h2>
+    <div class="user-list">
+        {% for user in users %}
+        <div class="user-item">
+            <span class="username">{{ user.username }}</span>
+            <button class="delete-button" onclick="showConfirmation('{{ user.username }}')">DELETE</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="confirmation-dialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog-content">
+            <p>All the SMS messages that the user <strong id="selected-user"></strong> has sent until now will be retained in the program's history. Are you sure you want to proceed with the deletion of this user? PLEASE PROCEED WITH CARE, THIS ACTION IS NOT REVERSIBLE. Do you wish to continue?</p>
+            <div class="dialog-buttons">
+                <form method="POST" id="delete-form">
+                    <input type="hidden" name="username" id="username-input">
+                    <button type="submit" class="delete-confirm-button">I understand, go ahead and delete this user permanently</button>
+                </form>
+                <button class="cancel-button" onclick="hideConfirmation()">No, that was a mistake, I want to keep this user, don't delete anything</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="back-section">
+        <a href="{{ url_for('admin.dashboard') }}" class="back-button">
+            <img src="{{ url_for('static', filename='icons/home.svg') }}" alt="Back to Dashboard">
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<style>
+.delete-user {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.delete-user h2 {
+    margin: 0 0 2rem;
+    text-align: center;
+    color: #333;
+}
+
+.user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.username {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.delete-button {
+    padding: 0.5rem 1rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-button:hover {
+    background: #c82333;
+}
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+}
+
+.dialog-content p {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.dialog-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.delete-confirm-button {
+    padding: 1rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+}
+
+.delete-confirm-button:hover {
+    background: #c82333;
+}
+
+.cancel-button {
+    padding: 1rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+}
+
+.cancel-button:hover {
+    background: #5a6268;
+}
+
+.back-section {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.back-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.back-button:hover {
+    background: #e9ecef;
+}
+
+.back-button img {
+    width: 32px;
+    height: 32px;
+}
+
+/* Dark mode styles */
+body.dark-mode .delete-user {
+    background: #2d2d2d;
+}
+
+body.dark-mode .user-item {
+    background: #1a1a1a;
+    border-color: #444;
+}
+
+body.dark-mode .dialog-content {
+    background: #2d2d2d;
+    color: #f8f9fa;
+}
+
+body.dark-mode .back-button {
+    background: #2d2d2d;
+    border-color: #444;
+}
+
+body.dark-mode .back-button:hover {
+    background: #363636;
+}
+</style>
+
+<script>
+function showConfirmation(username) {
+    document.getElementById('selected-user').textContent = username;
+    document.getElementById('username-input').value = username;
+    document.getElementById('confirmation-dialog').style.display = 'flex';
+}
+
+function hideConfirmation() {
+    document.getElementById('confirmation-dialog').style.display = 'none';
+}
+
+// Close dialog when clicking outside
+document.addEventListener('click', function(event) {
+    const dialog = document.getElementById('confirmation-dialog');
+    const dialogContent = dialog.querySelector('.dialog-content');
+    if (event.target === dialog) {
+        hideConfirmation();
+    }
+});
+
+// Close dialog on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        hideConfirmation();
+    }
+});
+</script>
+{% endblock %} 

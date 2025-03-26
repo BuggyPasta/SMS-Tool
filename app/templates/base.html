@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS-Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="light-mode">
+    {% if session.get('user_id') %}
+    <header class="header">
+        <img src="{{ url_for('static', filename='icons/app_logo.svg') }}" alt="SMS-Tool Logo" class="logo">
+        <h1 class="tagline">A simple SMS sending server</h1>
+    </header>
+    {% endif %}
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    {% if category != 'error' or not session['user_id'] %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if session.get('user_id') %}
+    <footer class="footer">
+        <div class="theme-toggle">
+            <img src="{{ url_for('static', filename='icons/mode_dark.svg') }}" alt="Toggle theme" id="theme-toggle-icon">
+        </div>
+        <div class="footer-text">
+            Created by <a href="https://github.com/BuggyPasta" target="_blank">BuggyPasta</a> | 
+            <a href="https://github.com/BuggyPasta/SMS-Tool" target="_blank">GitHub</a>
+        </div>
+    </footer>
+    {% endif %}
+
+    <style>
+    :root {
+        --text-color: #333;
+        --background-color: #fff;
+        --border-color: #dee2e6;
+    }
+
+    body.dark-mode {
+        --text-color: #e0e0e0;
+        --background-color: #1a1a1a;
+        --border-color: #4d4d4d;
+    }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .header {
+        background: var(--background-color);
+        padding: 1rem;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo {
+        height: 60px;
+        width: auto;
+    }
+
+    .tagline {
+        margin: 0.5rem 0 0;
+        font-size: 1.2rem;
+        color: var(--text-color);
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 2rem;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        box-sizing: border-box;
+    }
+
+    .flash-messages {
+        max-width: 800px;
+        margin: 0 auto 2rem;
+    }
+
+    .flash-message {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .flash-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .flash-message.warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+
+    .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .footer {
+        padding: 1rem;
+        text-align: center;
+        background: var(--background-color);
+        border-top: 1px solid var(--border-color);
+        position: relative;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .theme-toggle {
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        cursor: pointer;
+        z-index: 1000;
+        margin-bottom: 60px;
+    }
+
+    .theme-toggle img {
+        width: 24px;
+        height: 24px;
+        padding: 0.5rem;
+        background: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .theme-toggle img:hover {
+        transform: scale(1.1);
+    }
+
+    .footer-text {
+        color: var(--text-color);
+        font-size: 0.9rem;
+    }
+
+    .footer-text a {
+        color: var(--text-color);
+        text-decoration: none;
+    }
+
+    .footer-text a:hover {
+        text-decoration: underline;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--text-color);
+    }
+
+    label {
+        color: var(--text-color);
+    }
+
+    /* Light mode styles */
+    body.light-mode {
+        background: #f8f9fa;
+    }
+
+    body.light-mode .header {
+        background-color: #ffffff;
+    }
+
+    body.light-mode .tagline {
+        color: white;
+    }
+
+    body.light-mode .footer {
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Dark mode styles */
+    body.dark-mode {
+        background: #1a1a1a;
+    }
+
+    body.dark-mode .header {
+        background-color: #1a1a1a;
+        border-bottom: 1px solid #2d2d2d;
+    }
+
+    body.dark-mode .tagline {
+        color: #f8f9fa;
+    }
+
+    body.dark-mode .footer {
+        background: #2d2d2d;
+        border-top: 1px solid #444;
+    }
+
+    body.dark-mode .footer-text {
+        color: #aaa;
+    }
+
+    body.dark-mode .footer-text a {
+        color: #80bdff;
+    }
+
+    body.dark-mode .theme-toggle {
+        background: #2d2d2d;
+    }
+
+    body.dark-mode .theme-toggle img {
+        filter: invert(1);
+    }
+
+    .flash-message {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+
+    .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .flash-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .flash-message.warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const body = document.body;
+        const themeToggle = document.querySelector('.theme-toggle');
+        const themeIcon = document.getElementById('theme-toggle-icon');
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            body.className = savedTheme;
+            updateThemeIcon(savedTheme === 'dark-mode');
+        }
+        
+        // Toggle theme
+        themeToggle.addEventListener('click', function() {
+            const isDark = body.classList.toggle('dark-mode');
+            body.classList.toggle('light-mode');
+            
+            // Save theme preference
+            localStorage.setItem('theme', isDark ? 'dark-mode' : 'light-mode');
+            updateThemeIcon(isDark);
+        });
+        
+        function updateThemeIcon(isDark) {
+            themeIcon.src = isDark 
+                ? "{{ url_for('static', filename='icons/mode_light.svg') }}"
+                : "{{ url_for('static', filename='icons/mode_dark.svg') }}";
+        }
+    });
+    </script>
+</body>
+</html> 
